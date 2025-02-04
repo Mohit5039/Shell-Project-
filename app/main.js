@@ -5,15 +5,16 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
-/*rl.question("$ ", (answer) => {
-  console.log(`${answer}: command not found`);
-  rl.close();
-}); */
 
 // repl function - read eval print loop
 function prompt() {
   rl.question("$ ", (answer) => {
+    if(answer === "exit 0"){
+      exit(0);
+    }
+    else{
     console.log(`${answer}: command not found`);
+    }
     prompt(); // Recursively call the function to keep the loop going
   });
 }
