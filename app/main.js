@@ -9,3 +9,13 @@ rl.question("$ ", (answer) => {
   console.log(`${answer}: command not found`);
   rl.close();
 });
+
+// repl function - read eval print loop
+function prompt(){
+  rl.question("$ ", (answer) => {
+    console.log(`${answer}: command not found`);
+    prompt(); // recursive loop 
+  }) ;
+
+}
+prompt() ; 
