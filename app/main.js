@@ -5,10 +5,10 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
-rl.question("$ ", (answer) => {
+/*rl.question("$ ", (answer) => {
   console.log(`${answer}: command not found`);
   rl.close();
-});
+}); */
 
 // repl function - read eval print loop
 function prompt() {
