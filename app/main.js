@@ -11,11 +11,10 @@ rl.question("$ ", (answer) => {
 });
 
 // repl function - read eval print loop
-function prompt(){
+function prompt() {
   rl.question("$ ", (answer) => {
     console.log(`${answer}: command not found`);
-    prompt(); // recursive loop 
-  }) ;
-
+    prompt(); // Recursively call the function to keep the loop going
+  });
 }
-prompt() ; 
+prompt(); // Start the prompt loop
