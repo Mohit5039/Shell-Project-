@@ -12,6 +12,9 @@ function prompt() {
     if(answer === "exit 0"){
       process.exit(0);
     }
+    else if (answer.startsWith('echo')){
+      console.log(answer.slice(5)) ;
+    }
     else{
     console.log(`${answer}: command not found`);
     }
@@ -19,4 +22,3 @@ function prompt() {
   });
 }
 prompt(); // Start the prompt loop
-// hello 
