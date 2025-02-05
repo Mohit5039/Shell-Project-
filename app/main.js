@@ -13,7 +13,7 @@ function prompt() {
       process.exit(0);
     }
     else if (answer.startsWith('echo')){
-      console.log(answer.slice(5)) ;
+      console.log(answer.slice(5)) ; // echo command 
     }
     else{
     console.log(`${answer}: command not found`);
