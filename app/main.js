@@ -21,7 +21,7 @@ function prompt() {
       
       if (command === "") {
         console.log("Usage: type [command]"); // Handling empty case
-      } else if (command === "exit" || command === "echo") {
+      } else if (command === "exit" || command === "echo" || command === "type") {
         console.log(`${command} is a shell builtin`);
       } else {
         console.log(`${command}: not found`);
