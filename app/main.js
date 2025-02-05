@@ -11,6 +11,7 @@ function prompt() {
   rl.question("$ ", (answer) => {
     if(answer === "exit 0"){
       process.exit(0);
+      return ;
     }
     else if (answer.startsWith('echo')){
       console.log(answer.slice(5)) ;  
