@@ -1,4 +1,5 @@
 const readline = require("readline");
+const { spawn } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 
@@ -45,9 +46,36 @@ function prompt() {
         }
       }
     } 
-    else {
-      console.log(`${answer}: command not found`);
+    else{
+      const parts = answer.split(" ");
+      const command = parts[0];
+      const args = parts.slice(1);
+
+      // Searching for the command in PATH
+      const paths = process.env.PATH.split(path.delimiter);
+      let executablePath = null;
+
+      for (let p of paths) {
+        const fullPath = path.join(p, command);
+        if (fs.existsSync(fullPath) && fs.statSync(fullPath).isFile()) {
+          executablePath = fullPath;
+          break;
+        }
+      }
+
+      if(executablePath){
+        // Running the external program
+        const child = spawn(executablePath, args, { stdio: "inherit" });
+
+        child.on("error", (err) => {
+          console.log(`Error running command: ${err.message}`);
+        });
+      } else {
+        console.log(`${command}: command not found`);
+      }
+
     }
+    
 
     prompt(); // Keep the shell running
   });
