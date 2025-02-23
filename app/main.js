@@ -1,7 +1,7 @@
 const readline = require("readline");
 const fs = require("fs");
 const path = require("path");
-const{ execFileSync} = require("child_process") ;
+const { execFileSync } = require("child_process");
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -12,11 +12,13 @@ function prompt() {
   rl.question("$ ", (answer) => {
     const args = answer.trim().split(/\s+/);
     const command = args[0];
-    const commandargs = args.slice(1);
-    if(!command){
+    const commandargs = args.slice(1);  // Fix variable name consistency
+
+    if (!command) {
       prompt();
       return;
     }
+
     if (answer === "exit 0") {
       process.exit(0);
       return;
@@ -25,23 +27,13 @@ function prompt() {
       console.log(answer.slice(5));
     } 
     else if (answer.startsWith("type ")) {
-      //let command = answer.slice(5).trim();
       let cmd = commandargs[0];
 
-      if(!cmd){
-        console.log("Usage: type[command]") ;
-      } else if (["exit", "echo", "type"].includes(cmd)){
-        console.log(`${cmd} is a shell builtin`);
-      }
-
-      /*if (command === "") {
+      if (!cmd) {
         console.log("Usage: type [command]");
-      } 
-      else if (command === "exit" || command === "echo" || command === "type") {
-        console.log(`${command} is a shell builtin`);
-      } */
-
-      else {
+      } else if (["exit", "echo", "type"].includes(cmd)) {
+        console.log(`${cmd} is a shell builtin`);
+      } else {
         // Check in PATH directories
         const paths = process.env.PATH.split(path.delimiter);
         let found = false;
@@ -62,26 +54,28 @@ function prompt() {
       }
     } 
     else {
-     // Searching for external command 
-     const paths = process.env.PATH.split(path.delimiter) ;
-     let found = false ;
-     for(const dir of paths){
-      const fullPath = path.join(dir , command) ;
+      // Searching for external command
+      const paths = process.env.PATH.split(path.delimiter);
+      let found = false;
 
-      if(fs.existsSync(fullPath) && fs.statSync(fullPath).isFile()) {
-        found = true ;
+      for (const dir of paths) {
+        const fullPath = path.join(dir, command);
 
-        try{execFileSync(fullPath, commandArgs, { stdio: "inherit" });
-      } catch (error) {
-        console.error(`Error executing ${command}:`, error.message);
+        if (fs.existsSync(fullPath) && fs.statSync(fullPath).isFile()) {
+          found = true;
+
+          try {
+            execFileSync(fullPath, commandargs, { stdio: "inherit" }); // Use correct variable
+          } catch (error) {
+            console.error(`Error executing ${command}:`, error.message);
+          }
+          break;
+        }
       }
-       break ;
+
+      if (!found) {
+        console.log(`${command}: command not found`);
       }
-    
-     }
-     if (!found) {
-      console.log(`${command}: command not found`);
-    }
     }
 
     prompt(); // Keep the shell running
