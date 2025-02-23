@@ -17,6 +17,7 @@ function parseArguments(input){
     const char = input[i];
   if(char === "'" && (i===0 || input[i-1]!== "\\")){
     inSingleQuotes = !inSingleQuotes;
+    continue ;
    } else if (char === "" && !inSingleQuotes){
     if(currentArg){
       args.push(currentArg);
