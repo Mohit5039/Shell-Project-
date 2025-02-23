@@ -46,9 +46,9 @@ function prompt() {
       process.exit(0);
       return;
     } 
-    else if (answer.startsWith("echo")) {
-      console.log(answer.slice(5));
-    } 
+    else if (command === "echo") {
+      console.log(commandargs.join(" ").replace(/^'(.*)'$/, "$1"));
+    }
     else if (command === "pwd") {
       console.log(process.cwd()); 
     } 
