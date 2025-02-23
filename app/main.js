@@ -26,12 +26,15 @@ function prompt() {
     else if (answer.startsWith("echo")) {
       console.log(answer.slice(5));
     } 
+    else if (command === "pwd") {
+      console.log(process.cwd()); 
+    } 
     else if (answer.startsWith("type ")) {
       let cmd = commandargs[0];
 
       if (!cmd) {
         console.log("Usage: type [command]");
-      } else if (["exit", "echo", "type"].includes(cmd)) {
+      } else if (["exit", "echo", "type" , "pwd"].includes(cmd)) {
         console.log(`${cmd} is a shell builtin`);
       } else {
         // Check in PATH directories
