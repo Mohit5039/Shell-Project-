@@ -8,9 +8,32 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
+function parseArguments(input){
+  const args = [];
+  let currentArg = "" ;
+  let inSingleQuotes = false ;
+
+  for(let i = 0; i< input.length; i++) {
+    const char = input[i];
+  if(char === "'" && (i===0 || input[i-1]!== "\\")){
+    inSingleQuotes = !inSingleQuotes;
+   } else if (char === "" && !inSingleQuotes){
+    if(currentArg){
+      args.push(currentArg);
+      currentArg = "" ;
+    }
+  }else{
+    currentArg += char ;
+  }  
+  }
+  if(currentArg){
+    args.push(currentArg);
+  }
+  return args ;
+}
 function prompt() {
   rl.question("$ ", (answer) => {
-    const args = answer.trim().split(/\s+/);
+    const args = parseArguments(answer.trim()) ;
     const command = args[0];
     const commandargs = args.slice(1);  // Fix variable name consistency
 
