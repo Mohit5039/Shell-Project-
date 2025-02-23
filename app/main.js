@@ -12,13 +12,32 @@ function parseArguments(input){
   const args = [];
   let currentArg = "" ;
   let inSingleQuotes = false ;
+  let inDoubleQuotes = false ;
 
   for(let i = 0; i< input.length; i++) {
     const char = input[i];
-  if(char === "'" && (i===0 || input[i-1]!== "\\")){
+  if(char === "'" && !inDoubleQuotes){
     inSingleQuotes = !inSingleQuotes;
     continue ;
-   } else if (char === " " && !inSingleQuotes){
+   } 
+   else if(char === '"' && !inSingleQuotes){
+    inDoubleQuotes = !inDoubleQuotes;
+    continue;
+   }else if (char === "\\" && inDoubleQuotes && (input[i + 1] === '"' || input[i + 1] === "$" || input[i + 1] === "\\")) {
+    i++; // Skip the escape character
+    currentArg += input[i];
+  } else if (char === "$" && inDoubleQuotes) {
+    let varName = "";
+    i++;
+    while (i < input.length && /[a-zA-Z0-9_]/.test(input[i])) {
+      varName += input[i];
+      i++;
+    }
+    i--;
+    currentArg += process.env[varName] || "";
+  } 
+   
+   else if (char === " " && !inSingleQuotes && !inDoubleQuotes){
     if(currentArg){
       args.push(currentArg);
       currentArg = "" ;
