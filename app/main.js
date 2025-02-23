@@ -65,7 +65,7 @@ function prompt() {
           found = true;
 
           try {
-            execFileSync(fullPath, commandargs, { stdio: "inherit" }); // Use correct variable
+            execFileSync(command, commandargs, { stdio: "inherit" }); // Use correct variable
           } catch (error) {
             console.error(`Error executing ${command}:`, error.message);
           }
