@@ -35,7 +35,7 @@ function prompt() {
         console.log("cd: missing argument");
             } //else if(!path.isAbsolute(targetDir)){
               //console.log("cd: only absolute paths are supported in this stage");
-            } else {
+             else {
               const newPath = path.isAbsolute(targetDir) ? targetDir : path.resolve(targetDir);
               try {
                 process.chdir(targetDir);
