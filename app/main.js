@@ -29,6 +29,21 @@ function prompt() {
     else if (command === "pwd") {
       console.log(process.cwd()); 
     } 
+    else if (command === "cd"){
+      const targetDir = commandargs[0] ;
+      if(!targetDir){
+        console.log("cd: missing argument");
+            } else if(!path.isAbsolute(targetDir)){
+              console.log("cd: only absolute paths are supported in this stage");
+            } else {
+              try {
+                process.chdir(targetDir);
+              }
+              catch(error){
+                console.log(`cd: ${targetDir} : No such file or directory`)
+              }
+            }
+    }
     else if (answer.startsWith("type ")) {
       let cmd = commandargs[0];
 
