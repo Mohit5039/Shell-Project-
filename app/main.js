@@ -18,7 +18,7 @@ function parseArguments(input){
   if(char === "'" && (i===0 || input[i-1]!== "\\")){
     inSingleQuotes = !inSingleQuotes;
     continue ;
-   } else if (char === "" && !inSingleQuotes){
+   } else if (char === " " && !inSingleQuotes){
     if(currentArg){
       args.push(currentArg);
       currentArg = "" ;
@@ -48,8 +48,7 @@ function prompt() {
       return;
     } 
     else if (command === "echo") {
-      console.log(commandargs.join(" ").replace(/^'(.*)'$/, "$1"));
-    }
+      console.log(commandargs.join(" "));    }
     else if (command === "pwd") {
       console.log(process.cwd()); 
     } 
