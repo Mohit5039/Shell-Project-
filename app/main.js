@@ -36,12 +36,16 @@ function prompt() {
             } //else if(!path.isAbsolute(targetDir)){
               // console.log("cd: only absolute paths are supported in this stage");
              else {
-              const newPath = path.isAbsolute(targetDir) ? targetDir : path.resolve(targetDir);
-              try {
-                process.chdir(targetDir);
+              let newPath ;
+              if(targetDir === "~"){
+                newPath = process.env.HOME ;
+              } else {
+                newPath = path.resolve(targetDir);
               }
-              catch(error){
-                console.log(`cd: ${targetDir}: No such file or directory`)
+              try {
+                process.chdir(newPath);
+              } catch (error) {
+                console.log(`cd: ${targetDir}: No such file or directory`);
               }
             }
     }
