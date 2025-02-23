@@ -40,7 +40,7 @@ function prompt() {
                 process.chdir(targetDir);
               }
               catch(error){
-                console.log(`cd: ${targetDir} : No such file or directory`)
+                console.log(`cd: ${targetDir}: No such file or directory`)
               }
             }
     }
