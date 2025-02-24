@@ -13,51 +13,52 @@ function parseArguments(input) {
   let currentArg = "";
   let inSingleQuotes = false;
   let inDoubleQuotes = false;
-  let escaped = false;
 
   for (let i = 0; i < input.length; i++) {
     const char = input[i];
 
-    if (escaped) {
-      currentArg += '\\' + char; // Preserve the backslash
-      escaped = false;
-      continue;
-    }
-
-    if (char === "\\") {
-      escaped = true;
-      continue;
-    }
-
     if (char === "'" && !inDoubleQuotes) {
       inSingleQuotes = !inSingleQuotes;
-      currentArg += char;
+      continue;
     } else if (char === '"' && !inSingleQuotes) {
       inDoubleQuotes = !inDoubleQuotes;
-      currentArg += char;
+      continue;
+    } else if (char === "\\" && (inSingleQuotes || inDoubleQuotes)) {
+      // Handle escaping within quotes
+      i++; // Skip the escape character
+      currentArg += input[i]; // Append the escaped character
+    } else if (char === "$" && inDoubleQuotes) {
+      // Handle variable expansion inside double quotes
+      let varName = "";
+      i++;
+      while (i < input.length && /[a-zA-Z0-9_]/.test(input[i])) {
+        varName += input[i];
+        i++;
+      }
+      i--;
+      currentArg += process.env[varName] || "";
     } else if (char === " " && !inSingleQuotes && !inDoubleQuotes) {
+      // Split on spaces only when outside quotes
       if (currentArg) {
         args.push(currentArg);
         currentArg = "";
       }
     } else {
-      currentArg += char;
+      currentArg += char; // Add other characters to the argument
     }
   }
 
   if (currentArg) {
-    args.push(currentArg);
+    args.push(currentArg); // Add the last argument if any
   }
-
   return args;
 }
-
 
 function prompt() {
   rl.question("$ ", (answer) => {
     const args = parseArguments(answer.trim());
     const command = args[0];
-    const commandargs = args.slice(1);
+    const commandargs = args.slice(1); // Fix variable name consistency
 
     if (!command) {
       prompt();
@@ -67,21 +68,11 @@ function prompt() {
     if (answer === "exit 0") {
       process.exit(0);
       return;
-    } 
-    else if (command === "echo") {
-      const output = commandargs.map(arg => {
-        // Replace escaped spaces with actual spaces
-        return arg.replace(/\\ /g, " ");
-      }).join(" ");
-      process.stdout.write(output);
-      process.stdout.write("\n");
-    }
-    
-    
-    else if (command === "pwd") {
-      console.log(process.cwd()); 
-    } 
-    else if (command === "cd") {
+    } else if (command === "echo") {
+      console.log(commandargs.join(" "));
+    } else if (command === "pwd") {
+      console.log(process.cwd());
+    } else if (command === "cd") {
       const targetDir = commandargs[0];
       if (!targetDir) {
         console.log("cd: missing argument");
@@ -98,8 +89,7 @@ function prompt() {
           console.log(`cd: ${targetDir}: No such file or directory`);
         }
       }
-    }
-    else if (answer.startsWith("type ")) {
+    } else if (answer.startsWith("type ")) {
       let cmd = commandargs[0];
 
       if (!cmd) {
@@ -107,6 +97,7 @@ function prompt() {
       } else if (["exit", "echo", "type", "pwd"].includes(cmd)) {
         console.log(`${cmd} is a shell builtin`);
       } else {
+        // Check in PATH directories
         const paths = process.env.PATH.split(path.delimiter);
         let found = false;
 
@@ -124,20 +115,8 @@ function prompt() {
           console.log(`${cmd}: not found`);
         }
       }
-    } 
-    else if (command === "cat") {
-      commandargs.forEach((file) => {
-        let resolvedPath = file.replace(/\\\\/g, "\\"); // Preserve backslashes in filenames
-        try {
-          let content = fs.readFileSync(resolvedPath, "utf8");
-          process.stdout.write(content);
-        } catch (error) {
-          console.error(`cat: ${file}: No such file or directory`); // Shows the original input file name
-        }
-      });
-    }
-    
-    else {
+    } else {
+      // Searching for external command
       const paths = process.env.PATH.split(path.delimiter);
       let found = false;
 
@@ -148,7 +127,7 @@ function prompt() {
           found = true;
 
           try {
-            execFileSync(command, commandargs, { stdio: "inherit" });
+            execFileSync(command, commandargs, { stdio: "inherit" }); // Use correct variable
           } catch (error) {
             console.error(`Error executing ${command}:`, error.message);
           }
@@ -161,7 +140,7 @@ function prompt() {
       }
     }
 
-    prompt();
+    prompt(); // Keep the shell running
   });
 }
 
