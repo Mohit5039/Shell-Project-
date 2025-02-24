@@ -19,18 +19,25 @@ function parseArguments(input) {
   for (let i = 0; i < input.length; i++) {
     const char = input[i];
 
-    // Handle backslash escape sequence
+    // Handle escaped characters inside quotes
     if (char === "\\" && (inSingleQuotes || inDoubleQuotes)) {
       i++; // Skip the backslash
       if (i >= input.length) break;
 
-      // Add the escaped character to the argument
-      const nextChar = input[i];
-      if (nextChar === '"' || nextChar === "'" || nextChar === "$" || nextChar === "\\") {
-        currentArg += nextChar;  // Add the escaped quote or backslash
-      } else {
-        currentArg += "\\" + nextChar; // For any other character, escape normally
+      // Handle escaped single quote inside single quotes
+      if (inSingleQuotes && input[i] === "'") {
+        currentArg += "'";  // Literal single quote
+        continue;
       }
+
+      // Handle escaped double quote inside double quotes
+      if (inDoubleQuotes && input[i] === '"') {
+        currentArg += '"';  // Literal double quote
+        continue;
+      }
+
+      // Handle any other escaped character inside quotes
+      currentArg += "\\" + input[i];
       continue;
     }
 
@@ -79,6 +86,7 @@ function parseArguments(input) {
 
   return args;
 }
+
 
 
 
