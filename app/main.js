@@ -1,7 +1,7 @@
 const readline = require("readline");
 const fs = require("fs");
 const path = require("path");
-const { execFileSync } = require("child_process");
+const { spawnSync } = require("child_process");
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -9,12 +9,13 @@ const rl = readline.createInterface({
 });
 
 function parseRedirection(input) {
-  const redirMatch = input.match(/(.*?)\s*(?:1?>|>)\s*(\S+)/);
+  // Match either > or 1> for redirection
+  const redirMatch = input.match(/(.*?)(?:\s+)(>|1>)(?:\s+)(\S+)/);
   
   if (redirMatch) {
     return {
       command: redirMatch[1].trim(),
-      outputFile: redirMatch[2].trim(),
+      outputFile: redirMatch[3].trim(),
     };
   }
 
@@ -101,88 +102,28 @@ function parseArguments(input) {
   return args;
 }
 
-function executeCommand(command, args, outputFile) {
-  if (command === "echo") {
-    const output = args.join(" ");
-    if (outputFile) {
-      // Ensure directory exists
-      try {
-        const dir = path.dirname(outputFile);
-        fs.mkdirSync(dir, { recursive: true });
-        fs.writeFileSync(outputFile, output + "\n");
-      } catch (error) {
-        console.error(`Error writing to ${outputFile}: ${error.message}`);
-      }
-    } else {
-      console.log(output);
-    }
-    return;
-  }
-  
-  if (command === "pwd") {
-    const output = process.cwd();
-    if (outputFile) {
-      try {
-        const dir = path.dirname(outputFile);
-        fs.mkdirSync(dir, { recursive: true });
-        fs.writeFileSync(outputFile, output + "\n");
-      } catch (error) {
-        console.error(`Error writing to ${outputFile}: ${error.message}`);
-      }
-    } else {
-      console.log(output);
-    }
-    return;
-  }
-
-  // For external commands
-  try {
-    const result = spawnSync(command, args, {
-      stdio: outputFile ? ['inherit', 'pipe', 'inherit'] : 'inherit'
-    });
-    
-    if (result.status !== 0 && result.error) {
-      console.error(`Error executing ${command}: ${result.error.message}`);
-      return;
-    }
-    
-    if (outputFile && result.stdout) {
-      try {
-        const dir = path.dirname(outputFile);
-        fs.mkdirSync(dir, { recursive: true });
-        fs.writeFileSync(outputFile, result.stdout);
-      } catch (error) {
-        console.error(`Error writing to ${outputFile}: ${error.message}`);
-      }
-    }
-  } catch (error) {
-    console.error(`Error executing ${command}: ${error.message}`);
-  }
-}
-
 function prompt() {
   rl.question("$ ", (answer) => {
-    const args = parseArguments(answer.trim());
-    const command = args[0];
-    const commandargs = args.slice(1);  // Fix variable name consistency
-
-    if (!command) {
+    if (!answer.trim()) {
       prompt();
       return;
     }
+
+    // Check for redirection
+    const { command: fullCommand, outputFile } = parseRedirection(answer);
+    
+    // Parse the command into command and arguments
+    const args = parseArguments(fullCommand);
+    const command = args[0];
+    const commandArgs = args.slice(1);
 
     if (answer === "exit 0") {
       process.exit(0);
       return;
     } 
-    else if (command === "echo") {
-      console.log(commandargs.join(" "));
-    }
-    else if (command === "pwd") {
-      console.log(process.cwd()); 
-    } 
-    else if (command === "cd"){
-      const targetDir = commandargs[0];
+    
+    if (command === "cd") {
+      const targetDir = commandArgs[0];
       if (!targetDir) {
         console.log("cd: missing argument");
       } else {
@@ -198,9 +139,12 @@ function prompt() {
           console.log(`cd: ${targetDir}: No such file or directory`);
         }
       }
+      prompt();
+      return;
     }
-    else if (answer.startsWith("type ")) {
-      let cmd = commandargs[0];
+    
+    if (command === "type") {
+      let cmd = commandArgs[0];
 
       if (!cmd) {
         console.log("Usage: type [command]");
@@ -225,30 +169,95 @@ function prompt() {
           console.log(`${cmd}: not found`);
         }
       }
-    } 
-    else {
-      // Searching for external command
-      const paths = process.env.PATH.split(path.delimiter);
-      let found = false;
-
-      for (const dir of paths) {
-        const fullPath = path.join(dir, command);
-
-        if (fs.existsSync(fullPath) && fs.statSync(fullPath).isFile()) {
-          found = true;
-
-          try {
-            execFileSync(command, commandargs, { stdio: "inherit" }); // Use correct variable
-          } catch (error) {
-            console.error(`Error executing ${command}:`, error.message);
+      prompt();
+      return;
+    }
+    
+    if (command === "echo") {
+      const output = commandArgs.join(" ");
+      if (outputFile) {
+        try {
+          // Ensure directory exists
+          const dir = path.dirname(outputFile);
+          if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
           }
-          break;
+          // Write output to file
+          fs.writeFileSync(outputFile, output + "\n");
+        } catch (error) {
+          console.error(`Error writing to ${outputFile}: ${error.message}`);
         }
+      } else {
+        console.log(output);
       }
+      prompt();
+      return;
+    }
+    
+    if (command === "pwd") {
+      const output = process.cwd();
+      if (outputFile) {
+        try {
+          // Ensure directory exists
+          const dir = path.dirname(outputFile);
+          if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+          }
+          // Write output to file
+          fs.writeFileSync(outputFile, output + "\n");
+        } catch (error) {
+          console.error(`Error writing to ${outputFile}: ${error.message}`);
+        }
+      } else {
+        console.log(output);
+      }
+      prompt();
+      return;
+    }
+    
+    // External command
+    const paths = process.env.PATH.split(path.delimiter);
+    let found = false;
 
-      if (!found) {
-        console.log(`${command}: command not found`);
+    for (const dir of paths) {
+      const fullPath = path.join(dir, command);
+
+      if (fs.existsSync(fullPath) && fs.statSync(fullPath).isFile()) {
+        found = true;
+
+        try {
+          // Handle redirection for external commands
+          if (outputFile) {
+            // Ensure directory exists
+            const dir = path.dirname(outputFile);
+            if (!fs.existsSync(dir)) {
+              fs.mkdirSync(dir, { recursive: true });
+            }
+            
+            // Execute command and capture output
+            const result = spawnSync(command, commandArgs, { 
+              stdio: ['inherit', 'pipe', 'inherit']
+            });
+            
+            if (result.error) {
+              throw result.error;
+            }
+            
+            // Write stdout to file
+            fs.writeFileSync(outputFile, result.stdout);
+          } else {
+            // No redirection, just execute normally
+            spawnSync(command, commandArgs, { stdio: 'inherit' });
+          }
+        } catch (error) {
+          console.error(`Error executing ${command}: ${error.message}`);
+        }
+        break;
       }
+    }
+
+    if (!found) {
+      console.log(`${command}: command not found`);
     }
 
     prompt(); // Keep the shell running
