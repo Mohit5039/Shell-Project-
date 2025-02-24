@@ -32,7 +32,7 @@ function parseArguments(input) {
       continue;
     }
 
-    // If backslash is followed by a space outside of quotes, treat it as a space
+    // If backslash is followed by a space outside of quotes, treat it as a single space
     if (char === "\\" && !inSingleQuotes && !inDoubleQuotes) {
       currentArg += " "; // Add a space instead of the backslash
       continue;
@@ -70,6 +70,7 @@ function parseArguments(input) {
 
   return args;
 }
+
 
 
 function prompt() {
