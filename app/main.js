@@ -24,6 +24,7 @@ function parseArguments(input){
     }
     if(char === "\\"){
       if(!inSingleQuotes && !inDoubleQuotes && input[i+1] === " " ){
+        currentArg += " ";
         continue ;
       }
       escaped = true;
