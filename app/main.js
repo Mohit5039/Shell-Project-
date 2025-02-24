@@ -80,10 +80,10 @@ function prompt() {
       return;
     } 
     else if (command === "echo") {
-      const output = commandargs.map(arg => arg.replace(/\\n/g, "\n")).join(" ");
+      const output = commandargs.map(arg => arg.replace(/\\n/g, "\\n")).join(" ");
       process.stdout.write(output);
-      process.stdout.write("\n"); // Add a newline at the end of echo output
-    }
+      process.stdout.write("\n");
+    }    
     else if (command === "pwd") {
       console.log(process.cwd()); 
     } 
