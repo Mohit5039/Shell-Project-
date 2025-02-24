@@ -10,67 +10,80 @@ const rl = readline.createInterface({
 
 function parseArguments(input){
   const args = [];
-  let currentArg = "" ;
-  let inSingleQuotes = false ;
-  let inDoubleQuotes = false ;
-  let escaped = false ;
+  let currentArg = "";
+  let inSingleQuotes = false;
+  let inDoubleQuotes = false;
+  let escaped = false;
 
-  for(let i = 0; i< input.length; i++) {
+  for(let i = 0; i < input.length; i++) {
     const char = input[i];
     if(escaped){
-      currentArg += char ;
-      escaped = false ;
-      continue ;
+      currentArg += char;
+      escaped = false;
+      continue;
     }
     if(char === "\\"){
-      if(!inSingleQuotes && !inDoubleQuotes && input[i+1] === " " ){
-        i++ ;
-        currentArg += " ";
-        continue ;
+      if(!inSingleQuotes) {
+        if (i + 1 < input.length) {
+          const nextChar = input[i + 1];
+          const escapeMap = {
+            "n": "\n",
+            "t": "\t",
+            "r": "\r",
+            "\\": "\\",
+            "'": "'",
+            "\"": "\""
+          };
+          if (escapeMap.hasOwnProperty(nextChar)) {
+            currentArg += escapeMap[nextChar];
+            i++; 
+            continue;
+          }
+        }
       }
       escaped = true;
-      continue ;
+      continue;
     }
-  if(char === "'" && !inDoubleQuotes){
-    inSingleQuotes = !inSingleQuotes;
-    continue ;
-   } 
-   else if(char === '"' && !inSingleQuotes){
-    inDoubleQuotes = !inDoubleQuotes;
-    continue;
-   }else if (char === "\\" && inDoubleQuotes && (input[i + 1] === '"' || input[i + 1] === "$" || input[i + 1] === "\\")) {
-    i++; // Skip the escape character
-    currentArg += input[i];
-  } else if (char === "$" && inDoubleQuotes) {
-    let varName = "";
-    i++;
-    while (i < input.length && /[a-zA-Z0-9_]/.test(input[i])) {
-      varName += input[i];
+    if(char === "'" && !inDoubleQuotes){
+      inSingleQuotes = !inSingleQuotes;
+      continue;
+    } 
+    else if(char === '"' && !inSingleQuotes){
+      inDoubleQuotes = !inDoubleQuotes;
+      continue;
+    }else if (char === "\\" && inDoubleQuotes && (input[i + 1] === '"' || input[i + 1] === "$" || input[i + 1] === "\\")) {
+      i++; // Skip the escape character
+      currentArg += input[i];
+    } else if (char === "$" && inDoubleQuotes) {
+      let varName = "";
       i++;
-    }
-    i--;
-    currentArg += process.env[varName] || "";
-  } 
-   
-   else if (char === " " && !inSingleQuotes && !inDoubleQuotes){
-    if(currentArg){
-      args.push(currentArg);
-      currentArg = "" ;
-    }
-  }else{
-    currentArg += char ;
-  }  
+      while (i < input.length && /[a-zA-Z0-9_]/.test(input[i])) {
+        varName += input[i];
+        i++;
+      }
+      i--;
+      currentArg += process.env[varName] || "";
+    } 
+    else if (char === " " && !inSingleQuotes && !inDoubleQuotes){
+      if(currentArg){
+        args.push(currentArg);
+        currentArg = "";
+      }
+    }else{
+      currentArg += char;
+    }  
   }
   if(currentArg){
     args.push(currentArg);
   }
-  return args ;
+  return args;
 }
+
 function prompt() {
   rl.question("$ ", (answer) => {
-    const args = parseArguments(answer.trim()) ;
+    const args = parseArguments(answer.trim());
     const command = args[0];
-    const commandargs = args.slice(1);  // Fix variable name consistency
+    const commandargs = args.slice(1);
 
     if (!command) {
       prompt();
@@ -82,29 +95,28 @@ function prompt() {
       return;
     } 
     else if (command === "echo") {
-      console.log(commandargs.join(" "));    }
+      console.log(commandargs.join(" "));
+    }
     else if (command === "pwd") {
       console.log(process.cwd()); 
     } 
     else if (command === "cd"){
-      const targetDir = commandargs[0] ;
+      const targetDir = commandargs[0];
       if(!targetDir){
         console.log("cd: missing argument");
-            } //else if(!path.isAbsolute(targetDir)){
-              // console.log("cd: only absolute paths are supported in this stage");
-             else {
-              let newPath ;
-              if(targetDir === "~"){
-                newPath = process.env.HOME ;
-              } else {
-                newPath = path.resolve(targetDir);
-              }
-              try {
-                process.chdir(newPath);
-              } catch (error) {
-                console.log(`cd: ${targetDir}: No such file or directory`);
-              }
-            }
+      } else {
+        let newPath;
+        if(targetDir === "~"){
+          newPath = process.env.HOME;
+        } else {
+          newPath = path.resolve(targetDir);
+        }
+        try {
+          process.chdir(newPath);
+        } catch (error) {
+          console.log(`cd: ${targetDir}: No such file or directory`);
+        }
+      }
     }
     else if (answer.startsWith("type ")) {
       let cmd = commandargs[0];
@@ -114,7 +126,6 @@ function prompt() {
       } else if (["exit", "echo", "type" , "pwd"].includes(cmd)) {
         console.log(`${cmd} is a shell builtin`);
       } else {
-        // Check in PATH directories
         const paths = process.env.PATH.split(path.delimiter);
         let found = false;
 
@@ -133,8 +144,18 @@ function prompt() {
         }
       }
     } 
+    else if (command === "cat") {
+      commandargs.forEach((file) => {
+        let resolvedPath = file.replace(/\\n/g, "\n").replace(/\\t/g, "\t").replace(/\\r/g, "\r").replace(/\\'/g, "'").replace(/\\"/g, '"');
+        try {
+          let content = fs.readFileSync(resolvedPath, "utf8");
+          process.stdout.write(content);
+        } catch (error) {
+          console.error(`cat: ${resolvedPath}: No such file or directory`);
+        }
+      });
+    }
     else {
-      // Searching for external command
       const paths = process.env.PATH.split(path.delimiter);
       let found = false;
 
@@ -145,7 +166,7 @@ function prompt() {
           found = true;
 
           try {
-            execFileSync(command, commandargs, { stdio: "inherit" }); // Use correct variable
+            execFileSync(command, commandargs, { stdio: "inherit" });
           } catch (error) {
             console.error(`Error executing ${command}:`, error.message);
           }
@@ -158,7 +179,7 @@ function prompt() {
       }
     }
 
-    prompt(); // Keep the shell running
+    prompt();
   });
 }
 
