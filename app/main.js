@@ -131,12 +131,8 @@ function prompt() {
     } 
     else if (command === "cat") {
       commandargs.forEach((file) => {
-        let resolvedPath = file.replace(/\\\\/g, "\\")
-                       .replace(/\\n/g, "\n")
-                       .replace(/\\t/g, "\t")
-                       .replace(/\\r/g, "\r")
-                       .replace(/\\'/g, "'")
-                       .replace(/\\"/g, '"');
+        let resolvedPath = file.replace(/\\\\/g, "\\");
+
 
         try {
           let content = fs.readFileSync(resolvedPath, "utf8");
