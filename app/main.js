@@ -14,6 +14,8 @@ function parseArguments(input) {
   let inSingleQuotes = false;
   let inDoubleQuotes = false;
 
+  let backslashCount = 0;  // Track consecutive backslashes
+
   for (let i = 0; i < input.length; i++) {
     const char = input[i];
 
@@ -32,9 +34,16 @@ function parseArguments(input) {
       continue;
     }
 
-    // If backslash is followed by a space outside of quotes, treat it as a single space
+    // Count the number of backslashes outside quotes
     if (char === "\\" && !inSingleQuotes && !inDoubleQuotes) {
-      currentArg += " "; // Add a space instead of the backslash
+      backslashCount++;
+      continue;
+    }
+
+    // After encountering a space, if there were backslashes, add the appropriate number of spaces
+    if (backslashCount > 0 && char === " ") {
+      currentArg += " ".repeat(backslashCount);  // Add spaces equal to the number of backslashes
+      backslashCount = 0;  // Reset after handling spaces
       continue;
     }
 
@@ -70,6 +79,7 @@ function parseArguments(input) {
 
   return args;
 }
+
 
 
 
