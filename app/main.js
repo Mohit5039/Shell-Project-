@@ -8,57 +8,54 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
-function parseArguments(input) {
+function parseArguments(input){
   const args = [];
-  let currentArg = "";
-  let inSingleQuotes = false;
-  let inDoubleQuotes = false;
+  let currentArg = "" ;
+  let inSingleQuotes = false ;
+  let inDoubleQuotes = false ;
 
-  for (let i = 0; i < input.length; i++) {
+  for(let i = 0; i< input.length; i++) {
     const char = input[i];
-
-    if (char === "'" && !inDoubleQuotes) {
-      inSingleQuotes = !inSingleQuotes;
-      continue;
-    } else if (char === '"' && !inSingleQuotes) {
-      inDoubleQuotes = !inDoubleQuotes;
-      continue;
-    } else if (char === "\\" && (inSingleQuotes || inDoubleQuotes)) {
-      // Handle escaping within quotes
-      i++; // Skip the escape character
-      currentArg += input[i]; // Append the escaped character
-    } else if (char === "$" && inDoubleQuotes) {
-      // Handle variable expansion inside double quotes
-      let varName = "";
+  if(char === "'" && !inDoubleQuotes){
+    inSingleQuotes = !inSingleQuotes;
+    continue ;
+   } 
+   else if(char === '"' && !inSingleQuotes){
+    inDoubleQuotes = !inDoubleQuotes;
+    continue;
+   }else if (char === "\\" && inDoubleQuotes && (input[i + 1] === '"' || input[i + 1] === "$" || input[i + 1] === "\\")) {
+    i++; // Skip the escape character
+    currentArg += input[i];
+  } else if (char === "$" && inDoubleQuotes) {
+    let varName = "";
+    i++;
+    while (i < input.length && /[a-zA-Z0-9_]/.test(input[i])) {
+      varName += input[i];
       i++;
-      while (i < input.length && /[a-zA-Z0-9_]/.test(input[i])) {
-        varName += input[i];
-        i++;
-      }
-      i--;
-      currentArg += process.env[varName] || "";
-    } else if (char === " " && !inSingleQuotes && !inDoubleQuotes) {
-      // Split on spaces only when outside quotes
-      if (currentArg) {
-        args.push(currentArg);
-        currentArg = "";
-      }
-    } else {
-      currentArg += char; // Add other characters to the argument
     }
+    i--;
+    currentArg += process.env[varName] || "";
+  } 
+   
+   else if (char === " " && !inSingleQuotes && !inDoubleQuotes){
+    if(currentArg){
+      args.push(currentArg);
+      currentArg = "" ;
+    }
+  }else{
+    currentArg += char ;
+  }  
   }
-
-  if (currentArg) {
-    args.push(currentArg); // Add the last argument if any
+  if(currentArg){
+    args.push(currentArg);
   }
-  return args;
+  return args ;
 }
-
 function prompt() {
   rl.question("$ ", (answer) => {
-    const args = parseArguments(answer.trim());
+    const args = parseArguments(answer.trim()) ;
     const command = args[0];
-    const commandargs = args.slice(1); // Fix variable name consistency
+    const commandargs = args.slice(1);  // Fix variable name consistency
 
     if (!command) {
       prompt();
@@ -68,33 +65,38 @@ function prompt() {
     if (answer === "exit 0") {
       process.exit(0);
       return;
-    } else if (command === "echo") {
-      console.log(commandargs.join(" "));
-    } else if (command === "pwd") {
-      console.log(process.cwd());
-    } else if (command === "cd") {
-      const targetDir = commandargs[0];
-      if (!targetDir) {
+    } 
+    else if (command === "echo") {
+      console.log(commandargs.join(" "));    }
+    else if (command === "pwd") {
+      console.log(process.cwd()); 
+    } 
+    else if (command === "cd"){
+      const targetDir = commandargs[0] ;
+      if(!targetDir){
         console.log("cd: missing argument");
-      } else {
-        let newPath;
-        if (targetDir === "~") {
-          newPath = process.env.HOME;
-        } else {
-          newPath = path.resolve(targetDir);
-        }
-        try {
-          process.chdir(newPath);
-        } catch (error) {
-          console.log(`cd: ${targetDir}: No such file or directory`);
-        }
-      }
-    } else if (answer.startsWith("type ")) {
+            } //else if(!path.isAbsolute(targetDir)){
+              // console.log("cd: only absolute paths are supported in this stage");
+             else {
+              let newPath ;
+              if(targetDir === "~"){
+                newPath = process.env.HOME ;
+              } else {
+                newPath = path.resolve(targetDir);
+              }
+              try {
+                process.chdir(newPath);
+              } catch (error) {
+                console.log(`cd: ${targetDir}: No such file or directory`);
+              }
+            }
+    }
+    else if (answer.startsWith("type ")) {
       let cmd = commandargs[0];
 
       if (!cmd) {
         console.log("Usage: type [command]");
-      } else if (["exit", "echo", "type", "pwd"].includes(cmd)) {
+      } else if (["exit", "echo", "type" , "pwd"].includes(cmd)) {
         console.log(`${cmd} is a shell builtin`);
       } else {
         // Check in PATH directories
@@ -115,7 +117,8 @@ function prompt() {
           console.log(`${cmd}: not found`);
         }
       }
-    } else {
+    } 
+    else {
       // Searching for external command
       const paths = process.env.PATH.split(path.delimiter);
       let found = false;
