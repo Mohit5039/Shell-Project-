@@ -83,8 +83,16 @@ function parseArguments(input) {
     args.push(currentArg);
   }
 
-  return args;
+  // Fix outer quotes for the final argument
+  return args.map(arg => {
+    // Remove wrapping quotes if they're there
+    if (arg.startsWith("'") && arg.endsWith("'")) {
+      return `"${arg.slice(1, -1)}"`;
+    }
+    return arg;
+  });
 }
+
 
 
 
