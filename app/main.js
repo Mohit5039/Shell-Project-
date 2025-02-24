@@ -8,43 +8,77 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
-function formatQuotedString(input) {
-  if (input.startsWith("'") && input.endsWith("'")) {
-      // Convert single-quoted input into correctly formatted output
-      return `'${input.slice(1, -1)}'`;
-  }
-  return input;
-}
-
 function parseArguments(input) {
   const args = [];
   let currentArg = "";
   let inSingleQuotes = false;
   let inDoubleQuotes = false;
 
+  let backslashCount = 0;  // Track consecutive backslashes
+
   for (let i = 0; i < input.length; i++) {
-      const char = input[i];
+    const char = input[i];
 
-      // Toggle quote states
-      if (char === "'" && !inDoubleQuotes) {
-          inSingleQuotes = !inSingleQuotes;
-          continue;
-      }
-      if (char === '"' && !inSingleQuotes) {
-          inDoubleQuotes = !inDoubleQuotes;
-          continue;
-      }
+    // Handle backslash escape sequence
+    if (char === "\\" && (inSingleQuotes || inDoubleQuotes)) {
+      i++; // Skip the backslash
+      if (i >= input.length) break;
 
-      // Add character to current argument
-      currentArg += char;
+      // Add the escaped character to the argument
+      const nextChar = input[i];
+      if (nextChar === '"' || nextChar === "'" || nextChar === "$" || nextChar === "\\") {
+        currentArg += nextChar;  // Add the escaped quote or backslash
+      } else {
+        currentArg += "\\" + nextChar; // For any other character, escape normally
+      }
+      continue;
+    }
+
+    // Count the number of backslashes outside quotes
+    if (char === "\\" && !inSingleQuotes && !inDoubleQuotes) {
+      backslashCount++;
+      continue;
+    }
+
+    // After encountering a space, if there were backslashes, add the appropriate number of spaces
+    if (backslashCount > 0 && char === " ") {
+      currentArg += " ".repeat(backslashCount);  // Add spaces equal to the number of backslashes
+      backslashCount = 0;  // Reset after handling spaces
+      continue;
+    }
+
+    // Toggle single quote state when inside single quotes
+    if (char === "'" && !inDoubleQuotes) {
+      inSingleQuotes = !inSingleQuotes;
+      continue;
+    }
+
+    // Toggle double quote state when inside double quotes
+    if (char === '"' && !inSingleQuotes) {
+      inDoubleQuotes = !inDoubleQuotes;
+      continue;
+    }
+
+    // Split arguments based on spaces, but outside of quotes
+    if (char === " " && !inSingleQuotes && !inDoubleQuotes) {
+      if (currentArg) {
+        args.push(currentArg);
+        currentArg = "";
+      }
+      continue;
+    }
+
+    // Add the character to the current argument
+    currentArg += char;
   }
 
-  if (currentArg) args.push(formatQuotedString(currentArg));
+  // Add any remaining argument if there's one
+  if (currentArg) {
+    args.push(currentArg);
+  }
 
   return args;
 }
-
-
 
 
 
