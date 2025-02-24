@@ -101,6 +101,64 @@ function parseArguments(input) {
   return args;
 }
 
+function executeCommand(command, args, outputFile) {
+  if (command === "echo") {
+    const output = args.join(" ");
+    if (outputFile) {
+      // Ensure directory exists
+      try {
+        const dir = path.dirname(outputFile);
+        fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(outputFile, output + "\n");
+      } catch (error) {
+        console.error(`Error writing to ${outputFile}: ${error.message}`);
+      }
+    } else {
+      console.log(output);
+    }
+    return;
+  }
+  
+  if (command === "pwd") {
+    const output = process.cwd();
+    if (outputFile) {
+      try {
+        const dir = path.dirname(outputFile);
+        fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(outputFile, output + "\n");
+      } catch (error) {
+        console.error(`Error writing to ${outputFile}: ${error.message}`);
+      }
+    } else {
+      console.log(output);
+    }
+    return;
+  }
+
+  // For external commands
+  try {
+    const result = spawnSync(command, args, {
+      stdio: outputFile ? ['inherit', 'pipe', 'inherit'] : 'inherit'
+    });
+    
+    if (result.status !== 0 && result.error) {
+      console.error(`Error executing ${command}: ${result.error.message}`);
+      return;
+    }
+    
+    if (outputFile && result.stdout) {
+      try {
+        const dir = path.dirname(outputFile);
+        fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(outputFile, result.stdout);
+      } catch (error) {
+        console.error(`Error writing to ${outputFile}: ${error.message}`);
+      }
+    }
+  } catch (error) {
+    console.error(`Error executing ${command}: ${error.message}`);
+  }
+}
 
 function prompt() {
   rl.question("$ ", (answer) => {
