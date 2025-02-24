@@ -68,7 +68,7 @@ function parseArguments(input) {
     args.push(currentArg);
   }
   
-  return args;
+  return args.map(arg => arg.replace(/^['"]|['"]$/g, ""));
 }
 
 function prompt() {
