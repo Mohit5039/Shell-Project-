@@ -13,53 +13,61 @@ function parseArguments(input) {
   let currentArg = "";
   let inSingleQuotes = false;
   let inDoubleQuotes = false;
-
-  let backslashCount = 0;  // Track consecutive backslashes
-
+  
   for (let i = 0; i < input.length; i++) {
     const char = input[i];
-
-    // Handle backslash escape sequence
-    if (char === "\\" && (inSingleQuotes || inDoubleQuotes)) {
-      i++; // Skip the backslash
-      if (i >= input.length) break;
-
-      // Add the escaped character to the argument
-      const nextChar = input[i];
-      if (nextChar === '"' || nextChar === "'" || nextChar === "$" || nextChar === "\\") {
-        currentArg += nextChar;  // Add the escaped quote or backslash
+    
+    // Handle backslash escape sequences
+    if (char === "\\") {
+      // Check if we're at the end of the string
+      if (i + 1 >= input.length) {
+        // Add the backslash if it's the last character
+        currentArg += "\\";
       } else {
-        currentArg += "\\" + nextChar; // For any other character, escape normally
+        const nextChar = input[i + 1];
+        
+        // In double quotes, only certain characters get escaped
+        if (inDoubleQuotes) {
+          if (nextChar === '"' || nextChar === '\\' || nextChar === '$') {
+            i++; // Skip the backslash
+            currentArg += nextChar;
+          } else {
+            // Preserve the backslash for other characters in double quotes
+            currentArg += "\\";
+          }
+        }
+        // In single quotes, no escaping happens, treat backslash as literal
+        else if (inSingleQuotes) {
+          currentArg += "\\";
+        }
+        // Outside quotes, backslash escapes the next character
+        else {
+          i++; // Skip the backslash
+          // Handle space specially if escaped outside quotes
+          if (nextChar === ' ') {
+            currentArg += ' ';
+          } else {
+            // For other characters, preserve the literal character
+            currentArg += nextChar;
+          }
+        }
       }
       continue;
     }
-
-    // Count the number of backslashes outside quotes
-    if (char === "\\" && !inSingleQuotes && !inDoubleQuotes) {
-      backslashCount++;
-      continue;
-    }
-
-    // After encountering a space, if there were backslashes, add the appropriate number of spaces
-    if (backslashCount > 0 && char === " ") {
-      currentArg += " ".repeat(backslashCount);  // Add spaces equal to the number of backslashes
-      backslashCount = 0;  // Reset after handling spaces
-      continue;
-    }
-
-    // Toggle single quote state when inside single quotes
+    
+    // Toggle single quote state when encountering unescaped single quote
     if (char === "'" && !inDoubleQuotes) {
       inSingleQuotes = !inSingleQuotes;
       continue;
     }
-
-    // Toggle double quote state when inside double quotes
+    
+    // Toggle double quote state when encountering unescaped double quote
     if (char === '"' && !inSingleQuotes) {
       inDoubleQuotes = !inDoubleQuotes;
       continue;
     }
-
-    // Split arguments based on spaces, but outside of quotes
+    
+    // Split arguments based on spaces, but only when outside of quotes
     if (char === " " && !inSingleQuotes && !inDoubleQuotes) {
       if (currentArg) {
         args.push(currentArg);
@@ -67,24 +75,18 @@ function parseArguments(input) {
       }
       continue;
     }
-
+    
     // Add the character to the current argument
     currentArg += char;
   }
-
-  // Add any remaining argument if there's one
+  
+  // Add any remaining argument
   if (currentArg) {
     args.push(currentArg);
   }
-
+  
   return args;
 }
-
-
-
-
-
-
 
 
 function prompt() {
