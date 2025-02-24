@@ -19,34 +19,22 @@ function parseArguments(input) {
     const char = input[i];
 
     if (escaped) {
-      const escapeMap = {
-        "n": "\n", // Corrected to preserve newline
-        "t": "\t",
-        "r": "\r",
-        "\\": "\\",
-        "'": "'",
-        "\"": "\""
-      };
-      currentArg += escapeMap[char] || char;
+      currentArg += '\\' + char; // Preserve the backslash
       escaped = false;
       continue;
     }
 
     if (char === "\\") {
-      if (!inSingleQuotes) {
-        escaped = true;
-        continue;
-      }
-      currentArg += "\\";
+      escaped = true;
       continue;
     }
 
     if (char === "'" && !inDoubleQuotes) {
       inSingleQuotes = !inSingleQuotes;
-      continue;
+      currentArg += char;
     } else if (char === '"' && !inSingleQuotes) {
       inDoubleQuotes = !inDoubleQuotes;
-      continue;
+      currentArg += char;
     } else if (char === " " && !inSingleQuotes && !inDoubleQuotes) {
       if (currentArg) {
         args.push(currentArg);
@@ -64,6 +52,7 @@ function parseArguments(input) {
   return args;
 }
 
+
 function prompt() {
   rl.question("$ ", (answer) => {
     const args = parseArguments(answer.trim());
@@ -80,10 +69,11 @@ function prompt() {
       return;
     } 
     else if (command === "echo") {
-      const output = commandargs.map(arg => arg.replace(/\\n/g, "\\n")).join(" ");
+      const output = commandargs.join(" ");
       process.stdout.write(output);
       process.stdout.write("\n");
-    }    
+    }
+    
     else if (command === "pwd") {
       console.log(process.cwd()); 
     } 
