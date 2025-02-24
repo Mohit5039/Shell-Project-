@@ -13,9 +13,19 @@ function parseArguments(input){
   let currentArg = "" ;
   let inSingleQuotes = false ;
   let inDoubleQuotes = false ;
+  let escaped = false ;
 
   for(let i = 0; i< input.length; i++) {
     const char = input[i];
+    if(escaped){
+      currentArg += char ;
+      escaped = false ;
+      continue ;
+    }
+    if(char === "\\"){
+      escaped = true;
+      continue ;
+    }
   if(char === "'" && !inDoubleQuotes){
     inSingleQuotes = !inSingleQuotes;
     continue ;
