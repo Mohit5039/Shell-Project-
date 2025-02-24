@@ -8,49 +8,63 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
-function parseArguments(input){
+function parseArguments(input) {
   const args = [];
-  let currentArg = "" ;
-  let inSingleQuotes = false ;
-  let inDoubleQuotes = false ;
+  let currentArg = "";
+  let inSingleQuotes = false;
+  let inDoubleQuotes = false;
 
-  for(let i = 0; i< input.length; i++) {
+  for (let i = 0; i < input.length; i++) {
     const char = input[i];
-  if(char === "'" && !inDoubleQuotes){
-    inSingleQuotes = !inSingleQuotes;
-    continue ;
-   } 
-   else if(char === '"' && !inSingleQuotes){
-    inDoubleQuotes = !inDoubleQuotes;
-    continue;
-   }else if (char === "\\" && inDoubleQuotes && (input[i + 1] === '"' || input[i + 1] === "$" || input[i + 1] === "\\")) {
-    i++; // Skip the escape character
-    currentArg += input[i];
-  } else if (char === "$" && inDoubleQuotes) {
-    let varName = "";
-    i++;
-    while (i < input.length && /[a-zA-Z0-9_]/.test(input[i])) {
-      varName += input[i];
-      i++;
+
+    // Handle backslash escape sequence
+    if (char === "\\" && (inSingleQuotes || inDoubleQuotes)) {
+      i++; // Skip the backslash
+      if (i >= input.length) break;
+
+      // Add the escaped character to the argument
+      const nextChar = input[i];
+      if (nextChar === '"' || nextChar === "'" || nextChar === "$" || nextChar === "\\") {
+        currentArg += nextChar;  // Add the escaped quote or backslash
+      } else {
+        currentArg += "\\" + nextChar; // For any other character, escape normally
+      }
+      continue;
     }
-    i--;
-    currentArg += process.env[varName] || "";
-  } 
-   
-   else if (char === " " && !inSingleQuotes && !inDoubleQuotes){
-    if(currentArg){
-      args.push(currentArg);
-      currentArg = "" ;
+
+    // Toggle single quote state when inside single quotes
+    if (char === "'" && !inDoubleQuotes) {
+      inSingleQuotes = !inSingleQuotes;
+      continue;
     }
-  }else{
-    currentArg += char ;
-  }  
+
+    // Toggle double quote state when inside double quotes
+    if (char === '"' && !inSingleQuotes) {
+      inDoubleQuotes = !inDoubleQuotes;
+      continue;
+    }
+
+    // Split arguments based on spaces, but outside of quotes
+    if (char === " " && !inSingleQuotes && !inDoubleQuotes) {
+      if (currentArg) {
+        args.push(currentArg);
+        currentArg = "";
+      }
+      continue;
+    }
+
+    // Add the character to the current argument
+    currentArg += char;
   }
-  if(currentArg){
+
+  // Add any remaining argument if there's one
+  if (currentArg) {
     args.push(currentArg);
   }
-  return args ;
+
+  return args;
 }
+
 function prompt() {
   rl.question("$ ", (answer) => {
     const args = parseArguments(answer.trim()) ;
