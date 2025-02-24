@@ -8,6 +8,19 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
+function parseRedirection(input) {
+  const redirMatch = input.match(/(.*?)\s*(?:1?>|>)\s*(\S+)/);
+  
+  if (redirMatch) {
+    return {
+      command: redirMatch[1].trim(),
+      outputFile: redirMatch[2].trim(),
+    };
+  }
+
+  return { command: input, outputFile: null };
+}
+
 function parseArguments(input) {
   const args = [];
   let currentArg = "";
