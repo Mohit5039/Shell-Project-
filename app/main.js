@@ -44,9 +44,6 @@ function parseArguments(input) {
   return args;
 }
 
-// Example test case
-console.log(parseArguments(`echo \'\"example script\"\'`)); 
-// Expected Output: ['"example script"']
 
 
 
