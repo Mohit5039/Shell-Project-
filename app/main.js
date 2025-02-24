@@ -67,7 +67,7 @@ function parseArguments(input) {
 
 function prompt() {
   rl.question("$ ", (answer) => {
-    const args = parseArguments(answer.trim()) ;
+    const args = parseArguments(answer.trim());
     const command = args[0];
     const commandargs = args.slice(1);  // Fix variable name consistency
 
@@ -81,36 +81,35 @@ function prompt() {
       return;
     } 
     else if (command === "echo") {
-      console.log(commandargs.join(" "));    }
+      console.log(commandargs.join(" "));
+    }
     else if (command === "pwd") {
       console.log(process.cwd()); 
     } 
     else if (command === "cd"){
-      const targetDir = commandargs[0] ;
-      if(!targetDir){
+      const targetDir = commandargs[0];
+      if (!targetDir) {
         console.log("cd: missing argument");
-            } //else if(!path.isAbsolute(targetDir)){
-              // console.log("cd: only absolute paths are supported in this stage");
-             else {
-              let newPath ;
-              if(targetDir === "~"){
-                newPath = process.env.HOME ;
-              } else {
-                newPath = path.resolve(targetDir);
-              }
-              try {
-                process.chdir(newPath);
-              } catch (error) {
-                console.log(`cd: ${targetDir}: No such file or directory`);
-              }
-            }
+      } else {
+        let newPath;
+        if (targetDir === "~") {
+          newPath = process.env.HOME;
+        } else {
+          newPath = path.resolve(targetDir);
+        }
+        try {
+          process.chdir(newPath);
+        } catch (error) {
+          console.log(`cd: ${targetDir}: No such file or directory`);
+        }
+      }
     }
     else if (answer.startsWith("type ")) {
       let cmd = commandargs[0];
 
       if (!cmd) {
         console.log("Usage: type [command]");
-      } else if (["exit", "echo", "type" , "pwd"].includes(cmd)) {
+      } else if (["exit", "echo", "type", "pwd"].includes(cmd)) {
         console.log(`${cmd} is a shell builtin`);
       } else {
         // Check in PATH directories
