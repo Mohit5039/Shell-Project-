@@ -13,7 +13,6 @@ function parseArguments(input) {
   let currentArg = "";
   let inSingleQuotes = false;
   let inDoubleQuotes = false;
-
   let backslashCount = 0;  // Track consecutive backslashes
 
   for (let i = 0; i < input.length; i++) {
@@ -86,6 +85,7 @@ function parseArguments(input) {
 
   return args;
 }
+
 
 
 
