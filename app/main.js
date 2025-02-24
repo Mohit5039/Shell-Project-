@@ -80,7 +80,7 @@ function prompt() {
       return;
     } 
     else if (command === "echo") {
-      console.log(commandargs.map(arg => arg.replace(/\\n/g, "n")).join(" "));
+      console.log(commandargs.map(arg => arg.replace(/\\n/g, "\\n")).join(" "));
     }
     else if (command === "pwd") {
       console.log(process.cwd()); 
