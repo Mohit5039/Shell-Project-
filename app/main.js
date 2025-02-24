@@ -32,6 +32,12 @@ function parseArguments(input) {
       continue;
     }
 
+    // If backslash is followed by a space outside of quotes, treat it as a space
+    if (char === "\\" && !inSingleQuotes && !inDoubleQuotes) {
+      currentArg += " "; // Add a space instead of the backslash
+      continue;
+    }
+
     // Toggle single quote state when inside single quotes
     if (char === "'" && !inDoubleQuotes) {
       inSingleQuotes = !inSingleQuotes;
@@ -64,6 +70,7 @@ function parseArguments(input) {
 
   return args;
 }
+
 
 function prompt() {
   rl.question("$ ", (answer) => {
