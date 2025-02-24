@@ -23,8 +23,8 @@ function parseArguments(input){
       continue ;
     }
     if(char === "\\"){
-      if(!inSingleQuotes && !inDoubleQuotes && (input[i+1] === " " )){
-        currentArg += char ;
+      if(!inSingleQuotes && !inDoubleQuotes && input[i+1] === " " ){
+        continue ;
       }
       escaped = true;
       continue ;
