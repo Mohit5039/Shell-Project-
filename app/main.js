@@ -27,7 +27,6 @@ function parseArguments(input){
         if (i + 1 < input.length) {
           const nextChar = input[i + 1];
           const escapeMap = {
-            "n": "\n",
             "t": "\t",
             "r": "\r",
             "\\": "\\",
@@ -40,6 +39,11 @@ function parseArguments(input){
             continue;
           }
         }
+      }
+      if (input[i + 1] === "n") {
+        currentArg += "\\n";
+        i++;
+        continue;
       }
       escaped = true;
       continue;
@@ -95,7 +99,7 @@ function prompt() {
       return;
     } 
     else if (command === "echo") {
-      console.log(commandargs.join(" "));
+      console.log(commandargs.map(arg => arg.replace(/\\n/g, "\\n")).join(" "));
     }
     else if (command === "pwd") {
       console.log(process.cwd()); 
@@ -146,7 +150,7 @@ function prompt() {
     } 
     else if (command === "cat") {
       commandargs.forEach((file) => {
-        let resolvedPath = file.replace(/\\n/g, "\n").replace(/\\t/g, "\t").replace(/\\r/g, "\r").replace(/\\'/g, "'").replace(/\\"/g, '"');
+        let resolvedPath = file.replace(/\\n/g, "\n").replace(/\\t/g, "\t").replace(/\\r/g, "\r").replace(/\\'/g, "'").replace(/\"/g, '"');
         try {
           let content = fs.readFileSync(resolvedPath, "utf8");
           process.stdout.write(content);
