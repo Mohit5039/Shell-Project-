@@ -80,8 +80,7 @@ function prompt() {
       return;
     } 
     else if (command === "echo") {
-      console.log(commandargs.map(arg => arg.replace(/\\/g, "")).join(" ")); 
-      // Removes backslashes in echo output but not in file paths
+      console.log(commandargs.join(" ").replaceAll("\\\\", "\\").replaceAll("\\n", "n"));
     }
     else if (command === "pwd") {
       console.log(process.cwd()); 
