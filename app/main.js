@@ -20,7 +20,7 @@ function parseArguments(input) {
 
     if (escaped) {
       const escapeMap = {
-        "n": "n",  // Treat \n as "n" to match expected test output
+        "n": "\n", // Corrected to preserve newline
         "t": "\t",
         "r": "\r",
         "\\": "\\",
@@ -80,7 +80,8 @@ function prompt() {
       return;
     } 
     else if (command === "echo") {
-      console.log(commandargs.map(arg => arg.replace(/\\n/g, "n")).join(" "));
+      console.log(commandargs.map(arg => arg.replace(/\\/g, "")).join(" ")); 
+      // Removes backslashes in echo output but not in file paths
     }
     else if (command === "pwd") {
       console.log(process.cwd()); 
@@ -131,12 +132,12 @@ function prompt() {
     } 
     else if (command === "cat") {
       commandargs.forEach((file) => {
-        let resolvedPath = file.replace(/\\\\/g, "\\"); // Preserve double backslashes
+        let resolvedPath = file.replace(/\\\\/g, "\\"); // Preserve backslashes in filenames
         try {
           let content = fs.readFileSync(resolvedPath, "utf8");
           process.stdout.write(content);
         } catch (error) {
-          console.error(`cat: ${resolvedPath}: No such file or directory`);
+          console.error(`cat: ${file}: No such file or directory`); // Shows the original input file name
         }
       });
     }
