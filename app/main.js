@@ -131,9 +131,7 @@ function prompt() {
     } 
     else if (command === "cat") {
       commandargs.forEach((file) => {
-        let resolvedPath = file.replace(/\\\\/g, "\\");
-
-
+        let resolvedPath = file.replace(/\\(?!\\)/g, ""); // Preserve proper backslashes
         try {
           let content = fs.readFileSync(resolvedPath, "utf8");
           process.stdout.write(content);
