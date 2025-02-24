@@ -69,10 +69,14 @@ function prompt() {
       return;
     } 
     else if (command === "echo") {
-      const output = commandargs.join(" ");
+      const output = commandargs.map(arg => {
+        // Replace escaped spaces with actual spaces
+        return arg.replace(/\\ /g, " ");
+      }).join(" ");
       process.stdout.write(output);
       process.stdout.write("\n");
     }
+    
     
     else if (command === "pwd") {
       console.log(process.cwd()); 
