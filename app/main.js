@@ -84,27 +84,30 @@ const rl = readline.createInterface({
     // List of built-in commands for autocompletion
     const builtins = ['echo', 'exit', 'cd', 'pwd', 'type'];
     
+    // Trim any leading/trailing whitespace
+    const trimmedLine = line.trim();
+    
     // Check if this is a repeated tab press
-    if (line === lastTabLine) {
+    if (trimmedLine === lastTabLine) {
       tabPressCount++;
     } else {
       // Reset counter for new input
       tabPressCount = 1;
-      lastTabLine = line;
+      lastTabLine = trimmedLine;
     }
     
     // If the line is empty, return all builtins
-    if (line === '') {
+    if (trimmedLine === '') {
       return [builtins, line];
     }
     
     // Filter builtin commands that start with the current input
     const builtinHits = builtins.filter((builtin) => 
-      builtin.startsWith(line)
+      builtin.startsWith(trimmedLine)
     );
     
     // Find executables in PATH that start with the current input
-    const pathExecutables = findExecutablesInPath(line);
+    const pathExecutables = findExecutablesInPath(trimmedLine);
     
     // Combine builtin and executable matches
     const allHits = [...builtinHits, ...pathExecutables];
@@ -114,38 +117,43 @@ const rl = readline.createInterface({
     
     // If there are no matches, ring the bell
     if (uniqueHits.length === 0) {
-      process.stdout.write('\u0007'); // Bell character
-      return [[], line];
+      // Ring the bell - try multiple methods to ensure it works
+      console.log('\u0007'); // Unicode bell character
+      process.stdout.write('\u0007'); // Alternative method
+      
+      return [[], line]; // Return the original line unchanged
     }
     
     // If there's exactly one match, return it plus a space
     if (uniqueHits.length === 1) {
-      return [[uniqueHits[0] + ' '], uniqueHits[0]];
-    }
-    
-    // Multiple matches
-    // Find the longest common prefix of all matches
-    const commonPrefix = findLongestCommonPrefix(uniqueHits);
-    
-    if (tabPressCount === 1) {
-      // First tab press: complete to common prefix if it's longer than current input
-      if (commonPrefix.length > line.length) {
-        return [[commonPrefix], commonPrefix];
-      }
-      // If no additional completion is possible on first tab, just return the line unchanged
-      return [[], line];
-    } else if (tabPressCount >= 2) {
-      // Second tab press: display all matching executables
-      console.log();
-      console.log(uniqueHits.join(' '));
-      rl.prompt();
-      process.stdout.write(line);
+      tabPressCount = 0; // Reset counter after completion
+      return [[uniqueHits[0] + ' '], line]; // Add a space after the completed command
+    } else {
+      // Multiple matches
+      // Find the longest common prefix of all matches
+      const commonPrefix = findLongestCommonPrefix(uniqueHits);
       
-      // Don't change the input line after displaying completions
-      return [[], line];
+      if (tabPressCount === 1) {
+        // Only complete if the common prefix is longer than the current input
+        if (commonPrefix.length > trimmedLine.length) {
+          return [[commonPrefix], line];
+        }
+        
+        // If no additional completion is possible, ring the bell
+        process.stdout.write('\u0007'); // Bell character
+        return [[], line]; // Don't change the line
+      } else if (tabPressCount >= 2) {
+        // Second tab press: display all matching executables
+        console.log(); // Move to new line
+        console.log(uniqueHits.join('  ')); // Show matches separated by two spaces
+        rl.prompt(); // Return to prompt with the current line
+        process.stdout.write(line); // Make sure the current input stays
+        
+        // Don't change the input line after displaying completions
+        return [[], line];
+      }
+      return [[], line]; // Default case, don't change the line
     }
-    
-    return [[], line]; // Default case
   }
 });
 
