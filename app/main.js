@@ -3,6 +3,54 @@ const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");
 
+// Function to find executable files in PATH
+function findExecutablesInPath(prefix) {
+  // Get all directories in PATH
+  const pathDirs = process.env.PATH.split(path.delimiter);
+  
+  // Collect all matching executables
+  const executables = [];
+  
+  for (const dir of pathDirs) {
+    try {
+      // Skip if directory doesn't exist
+      if (!fs.existsSync(dir)) continue;
+      
+      // Read all files in the directory
+      const files = fs.readdirSync(dir);
+      
+      // Filter files that start with the prefix and are executable
+      for (const file of files) {
+        if (file.startsWith(prefix)) {
+          // Check if the file is executable
+          try {
+            const filePath = path.join(dir, file);
+            const stats = fs.statSync(filePath);
+            
+            // On Unix-like systems, check if the file is executable by the current user
+            // On Windows, check if it's a file (Windows doesn't have executable permissions)
+            const isExecutable = process.platform === 'win32' 
+              ? stats.isFile() 
+              : stats.isFile() && (stats.mode & 0o111); // Check for executable bit
+              
+            if (isExecutable) {
+              executables.push(file);
+            }
+          } catch (error) {
+            // Skip files that can't be accessed
+            continue;
+          }
+        }
+      }
+    } catch (error) {
+      // Skip directories that can't be accessed
+      continue;
+    }
+  }
+  
+  return executables;
+}
+
 // Custom readline interface with tab completion
 const rl = readline.createInterface({
   input: process.stdin,
@@ -11,13 +59,30 @@ const rl = readline.createInterface({
     // List of built-in commands for autocompletion
     const builtins = ['echo', 'exit', 'cd', 'pwd', 'type'];
     
+    // Trim any leading/trailing whitespace
+    const trimmedLine = line.trim();
+    
+    // If the line is empty, return all builtins
+    if (trimmedLine === '') {
+      return [builtins, line];
+    }
+    
     // Filter builtin commands that start with the current input
-    const hits = builtins.filter((builtin) => 
-      builtin.startsWith(line)
+    const builtinHits = builtins.filter((builtin) => 
+      builtin.startsWith(trimmedLine)
     );
     
-    // If there are no matches and line is not empty, ring the bell
-    if (hits.length === 0 && line.trim() !== '') {
+    // Find executables in PATH that start with the current input
+    const pathExecutables = findExecutablesInPath(trimmedLine);
+    
+    // Combine builtin and executable matches
+    const allHits = [...builtinHits, ...pathExecutables];
+    
+    // Remove duplicates (in case an executable has the same name as a builtin)
+    const uniqueHits = [...new Set(allHits)];
+    
+    // If there are no matches, ring the bell
+    if (uniqueHits.length === 0) {
       // Ring the bell - try multiple methods to ensure it works
       console.log('\u0007'); // Unicode bell character
       process.stdout.write('\u0007'); // Alternative method
@@ -26,10 +91,10 @@ const rl = readline.createInterface({
     }
     
     // If there's exactly one match, return it plus a space
-    if (hits.length === 1) {
-      return [[hits[0] + ' '], line]; // Add a space after the completed command
+    if (uniqueHits.length === 1) {
+      return [[uniqueHits[0] + ' '], line]; // Add a space after the completed command
     } else {
-      return [hits.length ? hits : [], line];
+      return [uniqueHits, line];
     }
   }
 });
@@ -371,4 +436,4 @@ function prompt() {
   });
 }
 
-prompt();
+prompt(); 
