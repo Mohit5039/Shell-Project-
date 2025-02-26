@@ -56,26 +56,28 @@ function findLongestCommonPrefix(strings) {
   if (!strings || strings.length === 0) return '';
   if (strings.length === 1) return strings[0];
   
-  // Sort the array to simplify comparison
-  strings.sort();
-  
-  // Take the first and last string after sorting
-  // The common prefix will be the common characters at the beginning of these strings
-  const firstStr = strings[0];
-  const lastStr = strings[strings.length - 1];
-  
-  let i = 0;
-  while (i < firstStr.length && firstStr.charAt(i) === lastStr.charAt(i)) {
-    i++;
+  let prefix = strings[0];
+  for (let i = 1; i < strings.length; i++) {
+    // Find the common prefix between the current prefix and the next string
+    let j = 0;
+    while (j < prefix.length && j < strings[i].length && 
+           prefix.charAt(j) === strings[i].charAt(j)) {
+      j++;
+    }
+    
+    // Update the prefix to the common part
+    prefix = prefix.substring(0, j);
+    
+    // If the prefix becomes empty, there's no common prefix
+    if (prefix === '') break;
   }
   
-  return firstStr.substring(0, i);
+  return prefix;
 }
 
 // Track tab press state
 let lastTabLine = '';
 let tabPressCount = 0;
-let lastCompletionResult = '';
 
 // Custom readline interface with tab completion
 const rl = readline.createInterface({
@@ -88,7 +90,7 @@ const rl = readline.createInterface({
     // Trim any leading/trailing whitespace
     const trimmedLine = line.trim();
     
-    // Check if this is a repeated tab press on the same line
+    // Check if this is a repeated tab press
     if (trimmedLine === lastTabLine) {
       tabPressCount++;
     } else {
@@ -119,37 +121,35 @@ const rl = readline.createInterface({
     // If there are no matches, ring the bell
     if (uniqueHits.length === 0) {
       // Ring the bell - try multiple methods to ensure it works
-      console.log('\u0007'); // Unicode bell character
-      process.stdout.write('\u0007'); // Alternative method
+      process.stdout.write('\u0007'); // Unicode bell character
       
       return [[], line]; // Return the original line unchanged
     }
     
     // If there's exactly one match, return it plus a space
     if (uniqueHits.length === 1) {
-      lastCompletionResult = uniqueHits[0];
-      return [[uniqueHits[0] + ' '], uniqueHits[0]]; // Add a space after the completed command
+      return [[uniqueHits[0]], uniqueHits[0]]; // Add a space after the completed command
     } else {
       // Multiple matches - find the longest common prefix
       const commonPrefix = findLongestCommonPrefix(uniqueHits);
       
       // If the common prefix is longer than what the user has typed
       if (commonPrefix.length > trimmedLine.length) {
-        lastCompletionResult = commonPrefix;
         return [[commonPrefix], commonPrefix]; // Return just the prefix without a space
       } else {
         // If this is a second+ tab press and the common prefix doesn't extend the current input
         if (tabPressCount >= 2) {
-          // Display all matching executables
+          // Display all matching executables on a new line
           console.log(); // Move to a new line
           console.log(uniqueHits.join('  ')); // Show matches separated by two spaces
-          rl.prompt(); // Return to prompt with the current line
-          process.stdout.write(line); // Restore the current line
+          rl.prompt(); // Return to prompt
+          process.stdout.write(line); // Write back the original line
         } else {
-          // First tab press with no additional completion: just ring the bell
+          // First tab press with no additional completion: ring the bell
           process.stdout.write('\u0007'); // Bell character
         }
-        return [[], line]; // Don't change the line in either case
+        
+        return [[], line]; // Don't change the line
       }
     }
   }
@@ -328,7 +328,6 @@ function prompt() {
     // Reset tab press state on command execution
     lastTabLine = '';
     tabPressCount = 0;
-    lastCompletionResult = '';
 
     // Check for redirection
     const { command: fullCommand, stdoutFile, stderrFile, appendStdout, appendStderr } = parseRedirection(answer);
