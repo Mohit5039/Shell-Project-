@@ -3,10 +3,6 @@ const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");
 
-// Track tab completion state
-let lastTabPressCommand = null;
-let tabPressCount = 0;
-
 // Function to find executable files in PATH
 function findExecutablesInPath(prefix) {
   // Get all directories in PATH
@@ -55,6 +51,10 @@ function findExecutablesInPath(prefix) {
   return executables;
 }
 
+// Track tab press state
+let lastTabLine = '';
+let tabPressCount = 0;
+
 // Custom readline interface with tab completion
 const rl = readline.createInterface({
   input: process.stdin,
@@ -65,6 +65,15 @@ const rl = readline.createInterface({
     
     // Trim any leading/trailing whitespace
     const trimmedLine = line.trim();
+    
+    // Check if this is a repeated tab press
+    if (trimmedLine === lastTabLine) {
+      tabPressCount++;
+    } else {
+      // Reset counter for new input
+      tabPressCount = 1;
+      lastTabLine = trimmedLine;
+    }
     
     // If the line is empty, return all builtins
     if (trimmedLine === '') {
@@ -85,40 +94,39 @@ const rl = readline.createInterface({
     // Remove duplicates (in case an executable has the same name as a builtin)
     const uniqueHits = [...new Set(allHits)];
     
-    // Check if it's a consecutive tab press on the same command
-    if (lastTabPressCommand === trimmedLine) {
-      tabPressCount++;
-      
-      // On second tab press with multiple matches, display all matches
-      if (tabPressCount === 2 && uniqueHits.length > 1) {
-        console.log('\n' + uniqueHits.join('  '));
-        // Reset for next time
-        lastTabPressCommand = null;
-        tabPressCount = 0;
-        return [[line], line];
-      }
-    } else {
-      // New command, reset counter
-      lastTabPressCommand = trimmedLine;
-      tabPressCount = 1;
-    }
-    
     // If there are no matches, ring the bell
     if (uniqueHits.length === 0) {
-      process.stdout.write('\u0007'); // Ring the bell
+      // Ring the bell - try multiple methods to ensure it works
+      console.log('\u0007'); // Unicode bell character
+      process.stdout.write('\u0007'); // Alternative method
+      
       return [[line], line]; // Return the original line unchanged
     }
     
     // If there's exactly one match, return it plus a space
     if (uniqueHits.length === 1) {
-      // Reset for next time
-      lastTabPressCommand = null;
-      tabPressCount = 0;
+      tabPressCount = 0; // Reset counter after completion
       return [[uniqueHits[0] + ' '], line]; // Add a space after the completed command
     } else {
-      // Multiple matches but first tab press, just ring the bell
-      process.stdout.write('\u0007'); // Ring the bell
-      return [[line], line]; // Return the original line unchanged
+      // Multiple matches
+      if (tabPressCount === 1) {
+        // First tab press: only ring the bell
+        process.stdout.write('\u0007'); // Bell character
+        return [[], line]; // Don't change the line
+      } else if (tabPressCount === 2) {
+        // Second tab press: display all matching executables
+        console.log(); // Move to new line
+        console.log(uniqueHits.join('  ')); // Show matches separated by two spaces
+        
+        // Reset tab press counter
+        tabPressCount = 0;
+        
+        // Return to prompt with the current line
+        rl.prompt();
+        
+        return [[], line]; // Don't change the line
+      }
+      return [uniqueHits, line];
     }
   }
 });
@@ -293,8 +301,8 @@ function prompt() {
       return;
     }
 
-    // Reset tab completion state when a command is executed
-    lastTabPressCommand = null;
+    // Reset tab press state on command execution
+    lastTabLine = '';
     tabPressCount = 0;
 
     // Check for redirection
