@@ -140,7 +140,7 @@ const rl = readline.createInterface({
           return [[commonPrefix], line]; // Don't add space for partial completion
         }
         
-        // If no additional completion is possible, don't do anything
+        // If no additional completion is possible, don't do anything on first tab
         return [[], line]; // Keep the line as is
       } else if (tabPressCount >= 2) {
         // Second tab press: display all matching executables
