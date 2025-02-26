@@ -51,28 +51,25 @@ function findExecutablesInPath(prefix) {
   return executables;
 }
 
-// Find the longest common prefix of an array of strings
+// Function to find the longest common prefix of an array of strings
 function findLongestCommonPrefix(strings) {
-  if (!strings || strings.length === 0) return '';
+  if (strings.length === 0) return '';
   if (strings.length === 1) return strings[0];
   
-  let prefix = strings[0];
-  for (let i = 1; i < strings.length; i++) {
-    // Find the common prefix between the current prefix and the next string
-    let j = 0;
-    while (j < prefix.length && j < strings[i].length && 
-           prefix.charAt(j) === strings[i].charAt(j)) {
-      j++;
-    }
-    
-    // Update the prefix to the common part
-    prefix = prefix.substring(0, j);
-    
-    // If the prefix becomes empty, there's no common prefix
-    if (prefix === '') break;
+  // Sort the array to make the comparison easier
+  strings.sort();
+  
+  // Take the first and last strings after sorting
+  // Their common prefix will be the common prefix for all strings
+  const firstStr = strings[0];
+  const lastStr = strings[strings.length - 1];
+  
+  let i = 0;
+  while (i < firstStr.length && firstStr.charAt(i) === lastStr.charAt(i)) {
+    i++;
   }
   
-  return prefix;
+  return firstStr.substring(0, i);
 }
 
 // Track tab press state
@@ -121,36 +118,40 @@ const rl = readline.createInterface({
     // If there are no matches, ring the bell
     if (uniqueHits.length === 0) {
       // Ring the bell - try multiple methods to ensure it works
-      process.stdout.write('\u0007'); // Unicode bell character
+      console.log('\u0007'); // Unicode bell character
+      process.stdout.write('\u0007'); // Alternative method
       
       return [[], line]; // Return the original line unchanged
     }
     
     // If there's exactly one match, return it plus a space
     if (uniqueHits.length === 1) {
-      return [[uniqueHits[0]], uniqueHits[0]]; // Add a space after the completed command
+      tabPressCount = 0; // Reset counter after completion
+      return [[uniqueHits[0] + ' '], line]; // Add a space after the completed command
     } else {
-      // Multiple matches - find the longest common prefix
-      const commonPrefix = findLongestCommonPrefix(uniqueHits);
-      
-      // If the common prefix is longer than what the user has typed
-      if (commonPrefix.length > trimmedLine.length) {
-        return [[commonPrefix], commonPrefix]; // Return just the prefix without a space
-      } else {
-        // If this is a second+ tab press and the common prefix doesn't extend the current input
-        if (tabPressCount >= 2) {
-          // Display all matching executables on a new line
-          console.log(); // Move to a new line
-          console.log(uniqueHits.join('  ')); // Show matches separated by two spaces
-          rl.prompt(); // Return to prompt
-          process.stdout.write(line); // Write back the original line
-        } else {
-          // First tab press with no additional completion: ring the bell
-          process.stdout.write('\u0007'); // Bell character
+      // Multiple matches
+      if (tabPressCount === 1) {
+        // Find the longest common prefix of all matches
+        const commonPrefix = findLongestCommonPrefix(uniqueHits);
+        
+        // Only complete if the common prefix is longer than the current input
+        if (commonPrefix.length > trimmedLine.length) {
+          return [[commonPrefix], line];
         }
         
+        // If no additional completion is possible, ring the bell
+        process.stdout.write('\u0007'); // Bell character
         return [[], line]; // Don't change the line
+      } else if (tabPressCount >= 2) {
+        // Second tab press: display all matching executables
+        console.log(); // Move to new line
+        console.log(uniqueHits.join('  ')); // Show matches separated by two spaces
+        rl.prompt(); // Return to prompt with the current line
+        
+        // Don't change the input line after displaying completions
+        return [[], line];
       }
+      return [[], line]; // Default case, don't change the line
     }
   }
 });
