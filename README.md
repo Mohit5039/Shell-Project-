@@ -1,34 +1,105 @@
-[![progress-banner](https://backend.codecrafters.io/progress/shell/0d789ce9-4ebf-4d7b-8e75-6b238603888f)](https://app.codecrafters.io/users/codecrafters-bot?r=2qF)
+Shell Project
 
-This is a starting point for JavaScript solutions to the
-["Build Your Own Shell" Challenge](https://app.codecrafters.io/courses/shell/overview).
+How I Made This
 
-In this challenge, you'll build your own POSIX compliant shell that's capable of
-interpreting shell commands, running external programs and builtin commands like
-cd, pwd, echo and more. Along the way, you'll learn about shell command parsing,
-REPLs, builtin commands, and more.
+This project was developed by following the CodeCrafters shell-building challenge. I have used AI models like GPT and Claude fairly whenever I faced challenges. The implementation involved breaking down the shell functionalities into modular components and gradually adding features such as command execution, argument parsing, redirection, and autocompletion.
 
-**Note**: If you're viewing this repo on GitHub, head over to
-[codecrafters.io](https://codecrafters.io) to try the challenge.
+What I Learned
 
-# Passing the first stage
+Gained experience in Node.js and practiced my JavaScript skills.
 
-The entry point for your `shell` implementation is in `app/main.js`. Study and
-uncomment the relevant code, and push your changes to pass the first stage:
+Deepened my understanding of shell behavior and command execution.
 
-```sh
-git commit -am "pass 1st stage" # any msg
-git push origin master
-```
+Learned how to implement tab completion and argument parsing.
 
-Time to move on to the next stage!
+Improved debugging and error-handling skills in a CLI environment.
 
-# Stage 2 & beyond
+Overview
 
-Note: This section is for stages 2 and beyond.
+This project is a simple custom shell implemented in JavaScript using Node.js. It provides basic shell functionalities such as command execution, path resolution, tab completion, input/output redirection, and autocompletion.
 
-1. Ensure you have `node (21)` installed locally
-1. Run `./your_program.sh` to run your program, which is implemented in
-   `app/main.js`.
-1. Commit your changes and run `git push origin master` to submit your solution
-   to CodeCrafters. Test output will be streamed to your terminal.
+Features
+
+Command Execution: Runs external commands found in the system's PATH.
+
+Built-in Commands:
+
+cd: Change directory.
+
+pwd: Print the current working directory.
+
+echo: Print text to the console.
+
+exit: Exit the shell.
+
+type: Identify if a command is built-in or external.
+
+Tab Completion & Autocompletion:
+
+Supports built-in commands and executables in PATH.
+
+Implements intelligent completion with longest common prefix.
+
+Provides multiple completion suggestions on double tab press.
+
+Redirection Support:
+
+Output redirection (>, >>, 1>, 1>>).
+
+Error redirection (2>, 2>>).
+
+Input redirection (<).
+
+Argument Parsing:
+
+Handles spaces, quotes, and escape sequences correctly.
+
+Error Handling:
+
+Handles invalid commands and permissions gracefully.
+
+Installation
+
+Prerequisites
+
+Node.js (v14+ recommended)
+
+Steps
+
+Clone this repository:
+
+git clone <repository-url>
+cd <repository-folder>
+
+Install dependencies (if any):
+
+npm install
+
+Run the shell:
+
+node shell.js
+
+Usage
+
+Run commands as you would in a typical terminal.
+
+Use TAB for autocompletion.
+
+Redirect output using > or >>.
+
+Redirect input using <.
+
+Exit using exit.
+
+Future Enhancements
+
+Add support for pipes (|).
+
+Implement background processes (&).
+
+Improve shell prompt customization.
+
+Add support for environment variables.
+
+
+
