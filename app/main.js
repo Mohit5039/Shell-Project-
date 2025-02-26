@@ -3,9 +3,26 @@ const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");
 
+// Custom readline interface with tab completion
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
+  completer: function(line) {
+    // List of built-in commands for autocompletion
+    const builtins = ['echo', 'exit', 'cd', 'pwd', 'type'];
+    
+    // Filter builtin commands that start with the current input
+    const hits = builtins.filter((builtin) => 
+      builtin.startsWith(line)
+    );
+    
+    // If there's a match, return it; otherwise, return the original line
+    if (hits.length === 1) {
+      return [hits, line];
+    } else {
+      return [hits.length ? hits : [], line];
+    }
+  }
 });
 
 function parseRedirection(input) {
@@ -186,10 +203,21 @@ function prompt() {
     const command = args[0];
     const commandArgs = args.slice(1);
 
-    if (answer === "exit 0") {
-      process.exit(0);
+    if (command === "exit") {
+      // Handle exit command with or without args
+      if (commandArgs.length === 0 || commandArgs[0] === "0") {
+        process.exit(0);
+        return;
+      }
+      const exitCode = parseInt(commandArgs[0]);
+      if (!isNaN(exitCode)) {
+        process.exit(exitCode);
+      } else {
+        console.error(`exit: numeric argument required`);
+        prompt();
+      }
       return;
-    } 
+    }
     
     if (command === "cd") {
       const targetDir = commandArgs[0];
