@@ -133,15 +133,15 @@ const rl = readline.createInterface({
       // Find the longest common prefix of all matches
       const commonPrefix = findLongestCommonPrefix(uniqueHits);
       
+      // First tab press: try to complete to common prefix
       if (tabPressCount === 1) {
         // Only complete if the common prefix is longer than the current input
         if (commonPrefix.length > trimmedLine.length) {
-          return [[commonPrefix], line];
+          return [[commonPrefix], line]; // Don't add space for partial completion
         }
         
-        // If no additional completion is possible, ring the bell
-        process.stdout.write('\u0007'); // Bell character
-        return [[], line]; // Don't change the line
+        // If no additional completion is possible, don't do anything
+        return [[], line]; // Keep the line as is
       } else if (tabPressCount >= 2) {
         // Second tab press: display all matching executables
         console.log(); // Move to new line
