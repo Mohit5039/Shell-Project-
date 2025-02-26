@@ -9,6 +9,18 @@ const rl = readline.createInterface({
 });
 
 function parseRedirection(input) {
+  // Check for stderr append redirection (2>>)
+  const stderrAppendMatch = input.match(/(.*?)(?:\s+)(2>>)(?:\s+)(\S+)/);
+  if (stderrAppendMatch) {
+    return {
+      command: stderrAppendMatch[1].trim(),
+      stderrFile: stderrAppendMatch[3].trim(),
+      stdoutFile: null,
+      appendStdout: false,
+      appendStderr: true
+    };
+  }
+  
   // Check for stderr redirection (2>)
   const stderrMatch = input.match(/(.*?)(?:\s+)(2>)(?:\s+)(\S+)/);
   if (stderrMatch) {
