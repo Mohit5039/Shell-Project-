@@ -9,23 +9,39 @@ const rl = readline.createInterface({
 });
 
 function parseRedirection(input) {
-  // First check for stderr redirection (2>)
+  // Check for stderr redirection (2>)
   const stderrMatch = input.match(/(.*?)(?:\s+)(2>)(?:\s+)(\S+)/);
   if (stderrMatch) {
     return {
       command: stderrMatch[1].trim(),
       stderrFile: stderrMatch[3].trim(),
-      stdoutFile: null
+      stdoutFile: null,
+      appendStdout: false,
+      appendStderr: false
     };
   }
   
-  // Then check for stdout redirection (> or 1>)
+  // Check for stdout append redirection (>> or 1>>)
+  const stdoutAppendMatch = input.match(/(.*?)(?:\s+)(>>|1>>)(?:\s+)(\S+)/);
+  if (stdoutAppendMatch) {
+    return {
+      command: stdoutAppendMatch[1].trim(),
+      stdoutFile: stdoutAppendMatch[3].trim(),
+      stderrFile: null,
+      appendStdout: true,
+      appendStderr: false
+    };
+  }
+  
+  // Check for stdout redirection (> or 1>)
   const stdoutMatch = input.match(/(.*?)(?:\s+)(>|1>)(?:\s+)(\S+)/);
   if (stdoutMatch) {
     return {
       command: stdoutMatch[1].trim(),
       stdoutFile: stdoutMatch[3].trim(),
-      stderrFile: null
+      stderrFile: null,
+      appendStdout: false,
+      appendStderr: false
     };
   }
 
@@ -33,7 +49,9 @@ function parseRedirection(input) {
   return { 
     command: input, 
     stdoutFile: null,
-    stderrFile: null
+    stderrFile: null,
+    appendStdout: false,
+    appendStderr: false
   };
 }
 
@@ -125,6 +143,22 @@ function ensureDirExists(filePath) {
   }
 }
 
+// Helper function to write to file (with append support)
+function writeToFile(file, content, append) {
+  try {
+    ensureDirExists(file);
+    if (append) {
+      fs.appendFileSync(file, content);
+    } else {
+      fs.writeFileSync(file, content);
+    }
+    return true;
+  } catch (error) {
+    console.error(`Error writing to ${file}: ${error.message}`);
+    return false;
+  }
+}
+
 function prompt() {
   rl.question("$ ", (answer) => {
     if (!answer.trim()) {
@@ -133,7 +167,7 @@ function prompt() {
     }
 
     // Check for redirection
-    const { command: fullCommand, stdoutFile, stderrFile } = parseRedirection(answer);
+    const { command: fullCommand, stdoutFile, stderrFile, appendStdout, appendStderr } = parseRedirection(answer);
     
     // Parse the command into command and arguments
     const args = parseArguments(fullCommand);
@@ -201,22 +235,12 @@ function prompt() {
       
       // Handle stdout redirection
       if (stdoutFile) {
-        try {
-          ensureDirExists(stdoutFile);
-          fs.writeFileSync(stdoutFile, output + "\n");
-        } catch (error) {
-          console.error(`Error writing to ${stdoutFile}: ${error.message}`);
-        }
+        writeToFile(stdoutFile, output + "\n", appendStdout);
       } else if (stderrFile) {
         // For echo, if only stderr is redirected, stdout still goes to console
         console.log(output);
         // Since echo doesn't typically generate stderr, we create an empty file
-        try {
-          ensureDirExists(stderrFile);
-          fs.writeFileSync(stderrFile, "");
-        } catch (error) {
-          console.error(`Error writing to ${stderrFile}: ${error.message}`);
-        }
+        writeToFile(stderrFile, "", appendStderr);
       } else {
         console.log(output);
       }
@@ -230,22 +254,12 @@ function prompt() {
       
       // Handle stdout redirection
       if (stdoutFile) {
-        try {
-          ensureDirExists(stdoutFile);
-          fs.writeFileSync(stdoutFile, output + "\n");
-        } catch (error) {
-          console.error(`Error writing to ${stdoutFile}: ${error.message}`);
-        }
+        writeToFile(stdoutFile, output + "\n", appendStdout);
       } else if (stderrFile) {
         // For pwd, if only stderr is redirected, stdout still goes to console
         console.log(output);
         // Since pwd doesn't typically generate stderr, we create an empty file
-        try {
-          ensureDirExists(stderrFile);
-          fs.writeFileSync(stderrFile, "");
-        } catch (error) {
-          console.error(`Error writing to ${stderrFile}: ${error.message}`);
-        }
+        writeToFile(stderrFile, "", appendStderr);
       } else {
         console.log(output);
       }
@@ -286,14 +300,12 @@ function prompt() {
           
           // Handle stdout redirection if needed
           if (stdoutFile && result.stdout) {
-            ensureDirExists(stdoutFile);
-            fs.writeFileSync(stdoutFile, result.stdout);
+            writeToFile(stdoutFile, result.stdout, appendStdout);
           }
           
           // Handle stderr redirection if needed
           if (stderrFile && result.stderr) {
-            ensureDirExists(stderrFile);
-            fs.writeFileSync(stderrFile, result.stderr);
+            writeToFile(stderrFile, result.stderr, appendStderr);
           }
         } catch (error) {
           console.error(`Error executing ${command}: ${error.message}`);
