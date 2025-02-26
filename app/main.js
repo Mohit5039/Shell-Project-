@@ -147,14 +147,13 @@ const rl = readline.createInterface({
         return [[], line]; // Keep the line as is
       } else if (tabPressCount >= 2) {
         // Second tab press: display all matching executables
-        ringBell(); // Ring bell before showing completions
         console.log(); // Move to new line
         console.log(uniqueHits.join('  ')); // Show matches separated by two spaces
         rl.prompt(); // Return to prompt with the current line
         process.stdout.write(line); // Make sure the current input stays
         
-        // Don't change the input line after displaying completions
-        return [[], line];
+        // KEY FIX: Don't change the input line after displaying completions
+        return [[], line]; // Return original line without changes
       }
       return [[], line]; // Default case, don't change the line
     }
