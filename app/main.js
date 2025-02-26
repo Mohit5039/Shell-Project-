@@ -100,7 +100,7 @@ const rl = readline.createInterface({
       console.log('\u0007'); // Unicode bell character
       process.stdout.write('\u0007'); // Alternative method
       
-      return [[line], line]; // Return the original line unchanged
+      return [[], line]; // Return the original line unchanged
     }
     
     // If there's exactly one match, return it plus a space
@@ -113,20 +113,16 @@ const rl = readline.createInterface({
         // First tab press: only ring the bell
         process.stdout.write('\u0007'); // Bell character
         return [[], line]; // Don't change the line
-      } else if (tabPressCount === 2) {
+      } else if (tabPressCount >= 2) {
         // Second tab press: display all matching executables
         console.log(); // Move to new line
         console.log(uniqueHits.join('  ')); // Show matches separated by two spaces
+        rl.prompt(); // Return to prompt with the current line
         
-        // Reset tab press counter
-        tabPressCount = 0;
-        
-        // Return to prompt with the current line
-        rl.prompt();
-        
-        return [[], line]; // Don't change the line
+        // Don't change the input line after displaying completions
+        return [[], line];
       }
-      return [uniqueHits, line];
+      return [[], line]; // Default case, don't change the line
     }
   }
 });
