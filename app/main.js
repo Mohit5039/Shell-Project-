@@ -127,32 +127,39 @@ const rl = readline.createInterface({
     // If there's exactly one match, return it plus a space
     if (uniqueHits.length === 1) {
       tabPressCount = 0; // Reset counter after completion
-      return [[uniqueHits[0] + ' '], line]; // Add a space after the completed command
+      return [[uniqueHits[0] + ' '], uniqueHits[0]]; // Add a space after the completed command
     } else {
       // Multiple matches
       // Find the longest common prefix of all matches
       const commonPrefix = findLongestCommonPrefix(uniqueHits);
       
+      // First tab press:
+      // - If common prefix is longer than current input, complete to that prefix
+      // - Otherwise, do nothing (keep input as is)
       if (tabPressCount === 1) {
-        // Only complete if the common prefix is longer than the current input
         if (commonPrefix.length > trimmedLine.length) {
-          return [[commonPrefix], line];
+          return [[commonPrefix], commonPrefix];
         }
-        
-        // If no additional completion is possible, ring the bell
-        process.stdout.write('\u0007'); // Bell character
-        return [[], line]; // Don't change the line
+        // No additional completion possible, just ring the bell
+        process.stdout.write('\u0007');
+        return [[], line];
       } else if (tabPressCount >= 2) {
-        // Second tab press: display all matching executables
-        console.log(); // Move to new line
-        console.log(uniqueHits.join('  ')); // Show matches separated by two spaces
-        rl.prompt(); // Return to prompt with the current line
-        process.stdout.write(line); // Make sure the current input stays
+        // Second tab press: Display all matching options
+        console.log();
         
-        // Don't change the input line after displaying completions
+        // Format the completions in the expected format
+        const completionsStr = uniqueHits.join(' ');
+        console.log(completionsStr);
+        
+        // Return to prompt with current line
+        rl.prompt();
+        process.stdout.write(line);
+        
+        // Return original line
         return [[], line];
       }
-      return [[], line]; // Default case, don't change the line
+      
+      return [[], line]; // Default: don't change the line
     }
   }
 });
