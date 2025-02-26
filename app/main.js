@@ -130,10 +130,10 @@ const rl = readline.createInterface({
       return [[uniqueHits[0] + ' '], line]; // Add a space after the completed command
     } else {
       // Multiple matches
+      // Find the longest common prefix of all matches
+      const commonPrefix = findLongestCommonPrefix(uniqueHits);
+      
       if (tabPressCount === 1) {
-        // Find the longest common prefix of all matches
-        const commonPrefix = findLongestCommonPrefix(uniqueHits);
-        
         // Only complete if the common prefix is longer than the current input
         if (commonPrefix.length > trimmedLine.length) {
           return [[commonPrefix], line];
@@ -147,6 +147,7 @@ const rl = readline.createInterface({
         console.log(); // Move to new line
         console.log(uniqueHits.join('  ')); // Show matches separated by two spaces
         rl.prompt(); // Return to prompt with the current line
+        process.stdout.write(line); // Make sure the current input stays
         
         // Don't change the input line after displaying completions
         return [[], line];
