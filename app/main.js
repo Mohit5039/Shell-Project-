@@ -72,6 +72,11 @@ function findLongestCommonPrefix(strings) {
   return firstStr.substring(0, i);
 }
 
+// Function to ring the bell
+function ringBell() {
+  process.stdout.write('\x07'); // ASCII bell character
+}
+
 // Track tab press state
 let lastTabLine = '';
 let tabPressCount = 0;
@@ -117,10 +122,7 @@ const rl = readline.createInterface({
     
     // If there are no matches, ring the bell
     if (uniqueHits.length === 0) {
-      // Ring the bell - try multiple methods to ensure it works
-      console.log('\u0007'); // Unicode bell character
-      process.stdout.write('\u0007'); // Alternative method
-      
+      ringBell();
       return [[], line]; // Return the original line unchanged
     }
     
@@ -140,10 +142,12 @@ const rl = readline.createInterface({
           return [[commonPrefix], line]; // Don't add space for partial completion
         }
         
-        // If no additional completion is possible, don't do anything on first tab
+        // If no additional completion is possible, ring the bell
+        ringBell();
         return [[], line]; // Keep the line as is
       } else if (tabPressCount >= 2) {
         // Second tab press: display all matching executables
+        ringBell(); // Ring bell before showing completions
         console.log(); // Move to new line
         console.log(uniqueHits.join('  ')); // Show matches separated by two spaces
         rl.prompt(); // Return to prompt with the current line
