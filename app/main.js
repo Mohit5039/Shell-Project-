@@ -16,9 +16,9 @@ const rl = readline.createInterface({
       builtin.startsWith(line)
     );
     
-    // If there's a match, return it; otherwise, return the original line
+    // If there's a match, return it plus a space; otherwise, return the original line
     if (hits.length === 1) {
-      return [hits, line];
+      return [[hits[0] + ' '], line]; // Add a space after the completed command
     } else {
       return [hits.length ? hits : [], line];
     }
