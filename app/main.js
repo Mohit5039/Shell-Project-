@@ -18,7 +18,10 @@ const rl = readline.createInterface({
     
     // If there are no matches and line is not empty, ring the bell
     if (hits.length === 0 && line.trim() !== '') {
-      process.stdout.write('\a'); // Ring the bell
+      // Ring the bell - try multiple methods to ensure it works
+      console.log('\u0007'); // Unicode bell character
+      process.stdout.write('\u0007'); // Alternative method
+      
       return [[line], line]; // Return the original line unchanged
     }
     
