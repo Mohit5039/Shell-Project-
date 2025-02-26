@@ -51,9 +51,31 @@ function findExecutablesInPath(prefix) {
   return executables;
 }
 
+// Find the longest common prefix of an array of strings
+function findLongestCommonPrefix(strings) {
+  if (!strings || strings.length === 0) return '';
+  if (strings.length === 1) return strings[0];
+  
+  // Sort the array to simplify comparison
+  strings.sort();
+  
+  // Take the first and last string after sorting
+  // The common prefix will be the common characters at the beginning of these strings
+  const firstStr = strings[0];
+  const lastStr = strings[strings.length - 1];
+  
+  let i = 0;
+  while (i < firstStr.length && firstStr.charAt(i) === lastStr.charAt(i)) {
+    i++;
+  }
+  
+  return firstStr.substring(0, i);
+}
+
 // Track tab press state
 let lastTabLine = '';
 let tabPressCount = 0;
+let lastCompletionResult = '';
 
 // Custom readline interface with tab completion
 const rl = readline.createInterface({
@@ -66,7 +88,7 @@ const rl = readline.createInterface({
     // Trim any leading/trailing whitespace
     const trimmedLine = line.trim();
     
-    // Check if this is a repeated tab press
+    // Check if this is a repeated tab press on the same line
     if (trimmedLine === lastTabLine) {
       tabPressCount++;
     } else {
@@ -105,24 +127,30 @@ const rl = readline.createInterface({
     
     // If there's exactly one match, return it plus a space
     if (uniqueHits.length === 1) {
-      tabPressCount = 0; // Reset counter after completion
-      return [[uniqueHits[0] + ' '], line]; // Add a space after the completed command
+      lastCompletionResult = uniqueHits[0];
+      return [[uniqueHits[0] + ' '], uniqueHits[0]]; // Add a space after the completed command
     } else {
-      // Multiple matches
-      if (tabPressCount === 1) {
-        // First tab press: only ring the bell
-        process.stdout.write('\u0007'); // Bell character
-        return [[], line]; // Don't change the line
-      } else if (tabPressCount >= 2) {
-        // Second tab press: display all matching executables
-        console.log(); // Move to new line
-        console.log(uniqueHits.join('  ')); // Show matches separated by two spaces
-        rl.prompt(); // Return to prompt with the current line
-        
-        // Don't change the input line after displaying completions
-        return [[], line];
+      // Multiple matches - find the longest common prefix
+      const commonPrefix = findLongestCommonPrefix(uniqueHits);
+      
+      // If the common prefix is longer than what the user has typed
+      if (commonPrefix.length > trimmedLine.length) {
+        lastCompletionResult = commonPrefix;
+        return [[commonPrefix], commonPrefix]; // Return just the prefix without a space
+      } else {
+        // If this is a second+ tab press and the common prefix doesn't extend the current input
+        if (tabPressCount >= 2) {
+          // Display all matching executables
+          console.log(); // Move to a new line
+          console.log(uniqueHits.join('  ')); // Show matches separated by two spaces
+          rl.prompt(); // Return to prompt with the current line
+          process.stdout.write(line); // Restore the current line
+        } else {
+          // First tab press with no additional completion: just ring the bell
+          process.stdout.write('\u0007'); // Bell character
+        }
+        return [[], line]; // Don't change the line in either case
       }
-      return [[], line]; // Default case, don't change the line
     }
   }
 });
@@ -300,6 +328,7 @@ function prompt() {
     // Reset tab press state on command execution
     lastTabLine = '';
     tabPressCount = 0;
+    lastCompletionResult = '';
 
     // Check for redirection
     const { command: fullCommand, stdoutFile, stderrFile, appendStdout, appendStderr } = parseRedirection(answer);
