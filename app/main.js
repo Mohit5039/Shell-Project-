@@ -16,7 +16,13 @@ const rl = readline.createInterface({
       builtin.startsWith(line)
     );
     
-    // If there's a match, return it plus a space; otherwise, return the original line
+    // If there are no matches and line is not empty, ring the bell
+    if (hits.length === 0 && line.trim() !== '') {
+      process.stdout.write('\a'); // Ring the bell
+      return [[line], line]; // Return the original line unchanged
+    }
+    
+    // If there's exactly one match, return it plus a space
     if (hits.length === 1) {
       return [[hits[0] + ' '], line]; // Add a space after the completed command
     } else {
