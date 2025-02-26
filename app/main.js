@@ -3,6 +3,10 @@ const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");
 
+// Track tab completion state
+let lastTabPressCommand = null;
+let tabPressCount = 0;
+
 // Function to find executable files in PATH
 function findExecutablesInPath(prefix) {
   // Get all directories in PATH
@@ -81,20 +85,40 @@ const rl = readline.createInterface({
     // Remove duplicates (in case an executable has the same name as a builtin)
     const uniqueHits = [...new Set(allHits)];
     
+    // Check if it's a consecutive tab press on the same command
+    if (lastTabPressCommand === trimmedLine) {
+      tabPressCount++;
+      
+      // On second tab press with multiple matches, display all matches
+      if (tabPressCount === 2 && uniqueHits.length > 1) {
+        console.log('\n' + uniqueHits.join('  '));
+        // Reset for next time
+        lastTabPressCommand = null;
+        tabPressCount = 0;
+        return [[line], line];
+      }
+    } else {
+      // New command, reset counter
+      lastTabPressCommand = trimmedLine;
+      tabPressCount = 1;
+    }
+    
     // If there are no matches, ring the bell
     if (uniqueHits.length === 0) {
-      // Ring the bell - try multiple methods to ensure it works
-      console.log('\u0007'); // Unicode bell character
-      process.stdout.write('\u0007'); // Alternative method
-      
+      process.stdout.write('\u0007'); // Ring the bell
       return [[line], line]; // Return the original line unchanged
     }
     
     // If there's exactly one match, return it plus a space
     if (uniqueHits.length === 1) {
+      // Reset for next time
+      lastTabPressCommand = null;
+      tabPressCount = 0;
       return [[uniqueHits[0] + ' '], line]; // Add a space after the completed command
     } else {
-      return [uniqueHits, line];
+      // Multiple matches but first tab press, just ring the bell
+      process.stdout.write('\u0007'); // Ring the bell
+      return [[line], line]; // Return the original line unchanged
     }
   }
 });
@@ -269,6 +293,10 @@ function prompt() {
       return;
     }
 
+    // Reset tab completion state when a command is executed
+    lastTabPressCommand = null;
+    tabPressCount = 0;
+
     // Check for redirection
     const { command: fullCommand, stdoutFile, stderrFile, appendStdout, appendStderr } = parseRedirection(answer);
     
@@ -436,4 +464,4 @@ function prompt() {
   });
 }
 
-prompt(); 
+prompt();
