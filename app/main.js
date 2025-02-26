@@ -9,18 +9,6 @@ const rl = readline.createInterface({
 });
 
 function parseRedirection(input) {
-  // Check for stderr append redirection (2>>)
-  const stderrAppendMatch = input.match(/(.*?)(?:\s+)(2>>)(?:\s+)(\S+)/);
-  if (stderrAppendMatch) {
-    return {
-      command: stderrAppendMatch[1].trim(),
-      stderrFile: stderrAppendMatch[3].trim(),
-      stdoutFile: null,
-      appendStdout: false,
-      appendStderr: true
-    };
-  }
-  
   // Check for stderr redirection (2>)
   const stderrMatch = input.match(/(.*?)(?:\s+)(2>)(?:\s+)(\S+)/);
   if (stderrMatch) {
@@ -205,12 +193,7 @@ function prompt() {
         try {
           process.chdir(newPath);
         } catch (error) {
-          const errorMsg = `cd: ${targetDir}: No such file or directory`;
-          if (stderrFile) {
-            writeToFile(stderrFile, errorMsg + "\n", appendStderr);
-          } else {
-            console.log(errorMsg);
-          }
+          console.log(`cd: ${targetDir}: No such file or directory`);
         }
       }
       prompt();
@@ -221,19 +204,9 @@ function prompt() {
       let cmd = commandArgs[0];
 
       if (!cmd) {
-        const errorMsg = "Usage: type [command]";
-        if (stderrFile) {
-          writeToFile(stderrFile, errorMsg + "\n", appendStderr);
-        } else {
-          console.log(errorMsg);
-        }
+        console.log("Usage: type [command]");
       } else if (["exit", "echo", "type", "pwd"].includes(cmd)) {
-        const output = `${cmd} is a shell builtin`;
-        if (stdoutFile) {
-          writeToFile(stdoutFile, output + "\n", appendStdout);
-        } else {
-          console.log(output);
-        }
+        console.log(`${cmd} is a shell builtin`);
       } else {
         // Check in PATH directories
         const paths = process.env.PATH.split(path.delimiter);
@@ -243,24 +216,14 @@ function prompt() {
           const fullPath = path.join(dir, cmd);
 
           if (fs.existsSync(fullPath) && fs.statSync(fullPath).isFile()) {
-            const output = `${cmd} is ${fullPath}`;
-            if (stdoutFile) {
-              writeToFile(stdoutFile, output + "\n", appendStdout);
-            } else {
-              console.log(output);
-            }
+            console.log(`${cmd} is ${fullPath}`);
             found = true;
             break;
           }
         }
 
         if (!found) {
-          const errorMsg = `${cmd}: not found`;
-          if (stderrFile) {
-            writeToFile(stderrFile, errorMsg + "\n", appendStderr);
-          } else {
-            console.log(errorMsg);
-          }
+          console.log(`${cmd}: not found`);
         }
       }
       prompt();
@@ -270,14 +233,14 @@ function prompt() {
     if (command === "echo") {
       const output = commandArgs.join(" ");
       
-      // Handle redirection
+      // Handle stdout redirection
       if (stdoutFile) {
         writeToFile(stdoutFile, output + "\n", appendStdout);
       } else if (stderrFile) {
-        // For echo with stderr redirection, we also output to console per the test cases
+        // For echo, if only stderr is redirected, stdout still goes to console
         console.log(output);
-        // Redirect the same output to stderr file
-        writeToFile(stderrFile, output + "\n", appendStderr);
+        // Since echo doesn't typically generate stderr, we create an empty file
+        writeToFile(stderrFile, "", appendStderr);
       } else {
         console.log(output);
       }
@@ -289,7 +252,7 @@ function prompt() {
     if (command === "pwd") {
       const output = process.cwd();
       
-      // Handle redirection
+      // Handle stdout redirection
       if (stdoutFile) {
         writeToFile(stdoutFile, output + "\n", appendStdout);
       } else if (stderrFile) {
@@ -342,32 +305,17 @@ function prompt() {
           
           // Handle stderr redirection if needed
           if (stderrFile && result.stderr) {
-            // Convert Buffer to string and make sure it ends with a newline
-            let stderrStr = result.stderr.toString();
-            if (stderrStr.length > 0 && !stderrStr.endsWith('\n')) {
-              stderrStr += '\n';
-            }
-            writeToFile(stderrFile, stderrStr, appendStderr);
+            writeToFile(stderrFile, result.stderr, appendStderr);
           }
         } catch (error) {
-          const errorMsg = `Error executing ${command}: ${error.message}`;
-          if (stderrFile) {
-            writeToFile(stderrFile, errorMsg + "\n", appendStderr);
-          } else {
-            console.error(errorMsg);
-          }
+          console.error(`Error executing ${command}: ${error.message}`);
         }
         break;
       }
     }
 
     if (!found) {
-      const errorMsg = `${command}: command not found`;
-      if (stderrFile) {
-        writeToFile(stderrFile, errorMsg + "\n", appendStderr);
-      } else {
-        console.log(errorMsg);
-      }
+      console.log(`${command}: command not found`);
     }
 
     prompt(); // Keep the shell running
