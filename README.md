@@ -1,5 +1,9 @@
 # Shell Project
 
+# How to use this in your system 
+Install npm package : 
+using :  npm install shell-project
+
 ## How I Made This
 This project was developed by following the CodeCrafters shell-building challenge. I have used AI models like GPT and Claude fairly whenever I faced challenges. The implementation involved breaking down the shell functionalities into modular components and gradually adding features such as command execution, argument parsing, redirection, and autocompletion.
 
